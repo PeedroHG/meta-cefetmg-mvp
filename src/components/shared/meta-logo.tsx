@@ -4,9 +4,14 @@ import { cn } from "@/lib/utils";
 interface MetaLogoProps {
   className?: string;
   compact?: boolean;
+  inverted?: boolean;
 }
 
-export function MetaLogo({ className, compact = false }: MetaLogoProps) {
+export function MetaLogo({
+  className,
+  compact = false,
+  inverted = false,
+}: MetaLogoProps) {
   return (
     <div className={cn("inline-flex items-center gap-2.5 select-none", className)}>
       {/* Fita Poligonal 3D da 35ª META com Halftone */}
@@ -49,34 +54,63 @@ export function MetaLogo({ className, compact = false }: MetaLogoProps) {
           fill="url(#halftone-dots)"
         />
 
-        {/* Wireframe Poligonal Angular em Slate/Navy */}
+        {/* Wireframe Poligonal Angular */}
         <polyline
           points="6,68 30,66 10,22 52,32 62,76 80,14 96,4"
           stroke="currentColor"
           strokeWidth="2.5"
           strokeLinejoin="miter"
-          className="text-slate-900 dark:text-slate-200"
+          className={
+            inverted
+              ? "text-white/95"
+              : "text-slate-900 dark:text-slate-200"
+          }
         />
         <polyline
           points="12,12 52,14 68,66 82,42 110,32 96,68 116,66"
           stroke="currentColor"
           strokeWidth="2.2"
           strokeLinejoin="miter"
-          className="text-slate-900 dark:text-slate-200"
+          className={
+            inverted
+              ? "text-white/95"
+              : "text-slate-900 dark:text-slate-200"
+          }
         />
       </svg>
 
       <div className="flex flex-col leading-none">
         <div className="flex items-baseline gap-1">
-          <span className="font-display font-bold text-lg md:text-xl tracking-tight text-slate-900 dark:text-slate-50">
+          <span
+            className={cn(
+              "font-display font-bold text-lg md:text-xl tracking-tight",
+              inverted
+                ? "text-white"
+                : "text-slate-900 dark:text-slate-50"
+            )}
+          >
             35ª META
           </span>
-          <span className="hidden sm:inline-block text-[10px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <span
+            className={cn(
+              "hidden sm:inline-block text-[10px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded",
+              inverted
+                ? "bg-white/20 text-white"
+                : "bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            )}
+          >
             CEFET-MG
           </span>
         </div>
         {!compact && (
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
+          <span
+            className={cn(
+              "text-[10px] font-medium tracking-tight",
+              inverted
+                ? "text-white/80"
+                : "text-slate-500 dark:text-slate-400"
+            )}
+          >
             Mostra Específica de Trabalhos e Aplicações
           </span>
         )}

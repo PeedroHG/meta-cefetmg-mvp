@@ -43,6 +43,14 @@ const ROLE_ICON_MAP = {
   VISITANTE: Stamp,
 };
 
+const ROLE_HEADER_BG_MAP: Record<UserRole, string> = {
+  MASTER: "bg-[#6A1B4D]",
+  COLABORADOR: "bg-[#F57C00]",
+  EXPOSITOR: "bg-[#1565C0]",
+  AVALIADOR: "bg-[#1E3A8A]",
+  VISITANTE: "bg-[#D81B60]",
+};
+
 export function AppShell({ user, children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -101,14 +109,14 @@ export function AppShell({ user, children }: AppShellProps) {
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <div className="h-[3.5px] w-full bg-meta-gradient sticky top-0 z-40" />
 
-        <header className="no-print sticky top-[3.5px] z-30 border-b border-slate-200/90 bg-white/90 backdrop-blur-md dark:border-slate-800/90 dark:bg-[#0F172A]/90">
+        <header className="no-print sticky top-[3.5px] z-30 bg-[#6A1B4D] text-white shadow-xs">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-4">
               <Link href={roleConfig.defaultRoute} className="focus:outline-none">
-                <MetaLogo compact />
+                <MetaLogo compact inverted />
               </Link>
 
-              <nav className="hidden md:flex items-center gap-1 ml-4 pl-4 border-l border-slate-200 dark:border-slate-800">
+              <nav className="hidden md:flex items-center gap-1 ml-4 pl-4 border-l border-white/20">
                 {navLinks.map((item) => {
                   const Icon = item.icon;
                   const active = pathname === item.href;
@@ -118,30 +126,29 @@ export function AppShell({ user, children }: AppShellProps) {
                       href={item.href}
                       className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                         active
-                          ? "bg-slate-900 text-white dark:bg-slate-800 dark:text-white"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60"
+                          ? "bg-white text-[#6A1B4D] shadow-2xs"
+                          : "text-white/85 hover:bg-white/15 hover:text-white"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
                       {item.label}
                     </Link>
                   );
-                })}\n              </nav>
+                })}
+              </nav>
             </div>
 
             <div className="flex items-center gap-2.5">
-              <div
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-xs ${roleConfig.badgeClass}`}
-              >
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-bold text-white backdrop-blur-xs">
                 <RoleIcon className="h-3.5 w-3.5" />
                 <span>{roleConfig.shortLabel}</span>
               </div>
 
               <div className="hidden sm:flex flex-col text-right leading-tight">
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 max-w-[160px] truncate">
+                <span className="text-xs font-bold text-white max-w-[160px] truncate">
                   {user.name}
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                <span className="text-[11px] text-fuchsia-200 font-mono">
                   {user.username}
                 </span>
               </div>
@@ -149,7 +156,7 @@ export function AppShell({ user, children }: AppShellProps) {
               <button
                 type="button"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/25 bg-white/15 text-white transition hover:bg-white/25"
                 title="Alternar tema"
               >
                 <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -160,7 +167,7 @@ export function AppShell({ user, children }: AppShellProps) {
                 type="button"
                 onClick={handleLogout}
                 disabled={isPending}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-rose-50 hover:text-rose-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/25 bg-white/15 px-2.5 text-xs font-semibold text-white transition hover:bg-rose-500/80"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 <span className="hidden md:inline">Sair</span>
@@ -178,6 +185,8 @@ export function AppShell({ user, children }: AppShellProps) {
     );
   }
 
+  const headerBgClass = ROLE_HEADER_BG_MAP[user.role];
+
   // Shell Nativo Mobile Focado (Visitante, Avaliador, Expositor e Colaborador)
   return (
     <div className="min-h-dvh bg-slate-200/70 dark:bg-[#050811] flex justify-center">
@@ -185,18 +194,18 @@ export function AppShell({ user, children }: AppShellProps) {
         {/* Fita Superior Oficial de 3.5px */}
         <div className="sticky top-0 z-40 h-[3.5px] w-full bg-meta-gradient" />
 
-        {/* App Bar Nativa Compacta (52px -> h-[52px]) */}
-        <header className="no-print sticky top-[3.5px] z-30 flex h-[52px] items-center justify-between gap-2 border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#0F172A]/95">
+        {/* App Bar Nativa Compacta Integrada na Cor do Perfil */}
+        <header
+          className={`no-print sticky top-[3.5px] z-30 flex h-[52px] items-center justify-between gap-2 px-3.5 text-white ${headerBgClass}`}
+        >
           <div className="flex items-center gap-2 min-w-0">
             <Link
               href={roleConfig.defaultRoute}
               className="shrink-0 focus:outline-none"
             >
-              <MetaLogo compact />
+              <MetaLogo compact inverted />
             </Link>
-            <div
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-2xs shrink-0 ${roleConfig.badgeClass}`}
-            >
+            <div className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-2xs backdrop-blur-xs shrink-0">
               <RoleIcon className="h-3 w-3" />
               <span>{roleConfig.shortLabel}</span>
             </div>
@@ -209,8 +218,8 @@ export function AppShell({ user, children }: AppShellProps) {
                 }
                 className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
                   user.isAccredited
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    ? "bg-emerald-400/25 text-emerald-100"
+                    : "bg-amber-400/25 text-amber-100"
                 }`}
               >
                 {user.isAccredited ? (
@@ -228,8 +237,8 @@ export function AppShell({ user, children }: AppShellProps) {
               title="Mapa & Catálogo Geral"
               className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border transition ${
                 pathname === "/cronograma"
-                  ? "border-[#1565C0] bg-[#1565C0]/10 text-[#1565C0] dark:text-[#60A5FA]"
-                  : "border-slate-200/80 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                  ? "border-white bg-white text-slate-900 shadow-2xs"
+                  : "border-white/25 bg-white/15 text-white hover:bg-white/25"
               }`}
             >
               <CalendarDays className="h-4 w-4" />
@@ -238,7 +247,7 @@ export function AppShell({ user, children }: AppShellProps) {
             <button
               type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white transition hover:bg-white/25"
               title="Alternar tema"
             >
               <Sun className="h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -249,7 +258,7 @@ export function AppShell({ user, children }: AppShellProps) {
               type="button"
               onClick={handleLogout}
               disabled={isPending}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white transition hover:bg-rose-500/80"
               title="Sair"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -257,14 +266,10 @@ export function AppShell({ user, children }: AppShellProps) {
           </div>
         </header>
 
-        {/* Área de Conteúdo Mobile (com padding p/ Bottom Bar e Pílula Demo) */}
+        {/* Área de Conteúdo Nativo Mobile (pb-32 garante folga da BottomNav) */}
         <main className="flex-1 px-3.5 pt-3 pb-32">{children}</main>
 
-        {/* Pílula Flutuante do Modo Apresentação */}
-        <DemoRoleSwitcher
-          currentRole={user.role}
-          currentUserName={user.name}
-        />
+        <DemoRoleSwitcher currentRole={user.role} currentUserName={user.name} />
       </div>
     </div>
   );
