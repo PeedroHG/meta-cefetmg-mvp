@@ -404,7 +404,7 @@ export function VisitanteDashboardView({
                     <img
                       src={proj.stampImageUrl}
                       alt={proj.title}
-                      className="h-13 w-13 shrink-0 rounded-full border border-slate-200 object-cover"
+                      className="h-12 w-12 shrink-0 rounded-full border border-slate-200 object-cover"
                     />
                   )}
 

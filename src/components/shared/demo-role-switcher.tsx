@@ -72,6 +72,19 @@ const DEMO_ROLES: {
   },
 ];
 
+function getShortDemoName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/);
+  const first = parts[0] || "";
+  if (/^(prof\.?|profa\.?|dr\.?|dra\.?)$/i.test(first) && parts.length > 1) {
+    const second = parts[1];
+    if (/^(dr\.?|dra\.?)$/i.test(second) && parts.length > 2) {
+      return `${first} ${parts[2]}`;
+    }
+    return `${first} ${second}`;
+  }
+  return first;
+}
+
 export function DemoRoleSwitcher({
   currentRole,
   currentUserName,
@@ -133,7 +146,7 @@ export function DemoRoleSwitcher({
         className={`no-print fixed z-50 ${
           isMaster
             ? "bottom-5 right-5"
-            : "bottom-[76px] left-1/2 w-full max-w-[440px] -translate-x-1/2 px-3 pointer-events-none flex flex-col items-end"
+            : "bottom-[82px] left-1/2 w-full max-w-[440px] -translate-x-1/2 px-3 pointer-events-none flex flex-col items-end"
         }`}
       >
         {open && (
@@ -252,7 +265,7 @@ export function DemoRoleSwitcher({
               "linear-gradient(90deg, #1E3A8A 0%, #1565C0 22%, #6A1B4D 48%, #D81B60 70%, #F57C00 88%, #FBC02D 100%)",
           }}
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/95 px-3 py-1.5 text-[11px] font-semibold text-white">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/95 px-2.5 py-1 text-[10px] font-semibold text-white">
             <Sparkles className="h-3 w-3 text-[#FBC02D]" />
             <span>
               Demo:{" "}
@@ -262,7 +275,7 @@ export function DemoRoleSwitcher({
             </span>
             {currentUserName && (
               <span className="text-slate-400">
-                • {currentUserName.split(" ")[0]}
+                • {getShortDemoName(currentUserName)}
               </span>
             )}
             <ChevronUp

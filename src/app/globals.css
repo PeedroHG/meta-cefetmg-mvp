@@ -99,6 +99,11 @@
   border: 2px dashed rgba(148, 163, 184, 0.45);
 }
 
+/* Oculta o botão flutuante do Next.js DevTools para não encavalar na navegação inferior mobile */
+nextjs-portal {
+  display: none !important;
+}
+
 @media print {
   .no-print {
     display: none !important;

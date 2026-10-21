@@ -88,21 +88,21 @@ export function MobileBottomNav({
           );
         })}
 
-        {/* Botão Central Elevado (FAB Principal do Perfil) */}
-        <div className="flex flex-col items-center justify-end">
+        {/* Botão Central Elevado (FAB Principal do Perfil) — 48x48px real (h-12 w-12) */}
+        <div className="flex flex-col items-center justify-end pb-1.5">
           <button
             type="button"
             onClick={centerAction.onClick}
-            className="group relative -mt-5 flex h-13 w-13 items-center justify-center rounded-2xl text-white shadow-lg transition-transform active:scale-90"
+            className="group relative -mt-6 flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg ring-4 ring-white transition-transform active:scale-90 dark:ring-[#0F172A]"
             style={{
               backgroundColor: centerAction.colorHex,
-              boxShadow: `0 8px 20px -4px ${centerAction.colorHex}80`,
+              boxShadow: `0 8px 20px -4px ${centerAction.colorHex}85`,
             }}
           >
-            <CenterIcon className="h-6 w-6 stroke-[2.3px]" />
+            <CenterIcon className="h-5 w-5 stroke-[2.4px]" />
             <span className="sr-only">{centerAction.label}</span>
           </button>
-          <span className="mt-1 text-[10px] font-bold tracking-tight text-slate-800 dark:text-slate-200">
+          <span className="mt-0.5 text-[10px] font-bold tracking-tight text-slate-800 dark:text-slate-200">
             {centerAction.label}
           </span>
         </div>

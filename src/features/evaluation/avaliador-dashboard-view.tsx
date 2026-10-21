@@ -204,7 +204,7 @@ export function AvaliadorDashboardView({
               <ClipboardCheck className="h-3 w-3" />
               Banca Oficial • 35ª META
             </span>
-            <h1 className="mt-1 truncate font-display text-base font-bold text-slate-900 dark:text-white">
+            <h1 className="mt-1 truncate font-display text-sm font-bold text-slate-900 dark:text-white">
               {evaluator.name}
             </h1>
           </div>
@@ -313,18 +313,22 @@ export function AvaliadorDashboardView({
                   className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="rounded-lg bg-[#1E3A8A] px-2 py-0.5 font-mono text-xs font-bold text-white">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className="shrink-0 rounded-lg bg-[#1E3A8A] px-2 py-0.5 font-mono text-xs font-bold text-white">
                         #{proj.shortCode}
                       </span>
-                      <span className="text-[11px] font-semibold text-slate-500">
-                        SIGAA {proj.sigaaCode}
+                      <span className="truncate font-mono text-[10px] font-semibold text-slate-500">
+                        {proj.sigaaCode}
                       </span>
                     </div>
                     {proj.isAccredited ? (
-                      <Badge variant="success">Estande Pronto</Badge>
+                      <Badge variant="success" className="shrink-0">
+                        Estande Pronto
+                      </Badge>
                     ) : (
-                      <Badge variant="warning">Sem Check-in</Badge>
+                      <Badge variant="warning" className="shrink-0">
+                        Sem Check-in
+                      </Badge>
                     )}
                   </div>
 
@@ -695,6 +699,7 @@ export function AvaliadorDashboardView({
             id: "credencial",
             label: "Credencial",
             icon: PenTool,
+            badge: evaluator.isAccredited ? undefined : "!",
           },
           {
             id: "guia",

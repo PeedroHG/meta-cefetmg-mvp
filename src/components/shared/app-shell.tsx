@@ -102,7 +102,7 @@ export function AppShell({ user, children }: AppShellProps) {
         <div className="h-[3.5px] w-full bg-meta-gradient sticky top-0 z-40" />
 
         <header className="no-print sticky top-[3.5px] z-30 border-b border-slate-200/90 bg-white/90 backdrop-blur-md dark:border-slate-800/90 dark:bg-[#0F172A]/90">
-          <div className="mx-auto flex h-15 max-w-7xl items-center justify-between px-4 sm:px-6">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-4">
               <Link href={roleConfig.defaultRoute} className="focus:outline-none">
                 <MetaLogo compact />
@@ -126,8 +126,7 @@ export function AppShell({ user, children }: AppShellProps) {
                       {item.label}
                     </Link>
                   );
-                })}
-              </nav>
+                })}\n              </nav>
             </div>
 
             <div className="flex items-center gap-2.5">
@@ -186,8 +185,8 @@ export function AppShell({ user, children }: AppShellProps) {
         {/* Fita Superior Oficial de 3.5px */}
         <div className="sticky top-0 z-40 h-[3.5px] w-full bg-meta-gradient" />
 
-        {/* App Bar Nativa Compacta (52px) */}
-        <header className="no-print sticky top-[3.5px] z-30 flex h-13 items-center justify-between border-b border-slate-200/80 bg-white/95 px-3.5 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#0F172A]/95">
+        {/* App Bar Nativa Compacta (52px -> h-[52px]) */}
+        <header className="no-print sticky top-[3.5px] z-30 flex h-[52px] items-center justify-between gap-2 border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#0F172A]/95">
           <div className="flex items-center gap-2 min-w-0">
             <Link
               href={roleConfig.defaultRoute}
@@ -208,7 +207,7 @@ export function AppShell({ user, children }: AppShellProps) {
                     ? "Avaliador Credenciado"
                     : "Credenciamento Pendente"
                 }
-                className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
+                className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
                   user.isAccredited
                     ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                     : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
@@ -223,11 +222,7 @@ export function AppShell({ user, children }: AppShellProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="max-w-[92px] truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {user.name.split(" ")[0]}
-            </span>
-
+          <div className="flex items-center gap-1.5 shrink-0">
             <Link
               href="/cronograma"
               title="Mapa & Catálogo Geral"
@@ -263,7 +258,7 @@ export function AppShell({ user, children }: AppShellProps) {
         </header>
 
         {/* Área de Conteúdo Mobile (com padding p/ Bottom Bar e Pílula Demo) */}
-        <main className="flex-1 px-3.5 pt-3 pb-28">{children}</main>
+        <main className="flex-1 px-3.5 pt-3 pb-32">{children}</main>
 
         {/* Pílula Flutuante do Modo Apresentação */}
         <DemoRoleSwitcher
