@@ -51,8 +51,9 @@ export function AppShell({ user, children }: AppShellProps) {
 
   const roleConfig = ROLE_META_CONFIG[user.role];
   const RoleIcon = ROLE_ICON_MAP[user.role];
+  const isMaster = user.role === "MASTER";
 
-  // Sincronização em Tempo Real (Polling leve + BroadcastChannel entre abas)
+  // Sincronização em Tempo Real (Polling leve)
   useEffect(() => {
     let lastUpdatedAt = 0;
     const interval = setInterval(async () => {
@@ -81,151 +82,195 @@ export function AppShell({ user, children }: AppShellProps) {
     });
   };
 
-  const navLinks = [
-    {
-      href: roleConfig.defaultRoute,
-      label: `Painel ${roleConfig.shortLabel}`,
-      icon: RoleIcon,
-    },
-    {
-      href: "/cronograma",
-      label: "Cronograma & Catálogo",
-      icon: CalendarDays,
-    },
-  ];
+  // Layout Largo exclusivo para o Organizador Master
+  if (isMaster) {
+    const navLinks = [
+      {
+        href: roleConfig.defaultRoute,
+        label: `Painel ${roleConfig.shortLabel}`,
+        icon: RoleIcon,
+      },
+      {
+        href: "/cronograma",
+        label: "Cronograma & Catálogo",
+        icon: CalendarDays,
+      },
+    ];
 
-  return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {/* Barra Superior de 3px no Gradiente Oficial da 35ª META */}
-      <div className="h-[3.5px] w-full bg-meta-gradient sticky top-0 z-40" />
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <div className="h-[3.5px] w-full bg-meta-gradient sticky top-0 z-40" />
 
-      {/* Header Institucional */}
-      <header className="no-print sticky top-[3.5px] z-30 border-b border-slate-200/90 bg-white/90 backdrop-blur-md dark:border-slate-800/90 dark:bg-[#0F172A]/90">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-4">
-            <Link href={roleConfig.defaultRoute} className="focus:outline-none">
-              <MetaLogo compact />
-            </Link>
+        <header className="no-print sticky top-[3.5px] z-30 border-b border-slate-200/90 bg-white/90 backdrop-blur-md dark:border-slate-800/90 dark:bg-[#0F172A]/90">
+          <div className="mx-auto flex h-15 max-w-7xl items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-4">
+              <Link href={roleConfig.defaultRoute} className="focus:outline-none">
+                <MetaLogo compact />
+              </Link>
 
-            {/* Navegação Desktop */}
-            <nav className="hidden md:flex items-center gap-1 ml-4 pl-4 border-l border-slate-200 dark:border-slate-800">
-              {navLinks.map((item) => {
-                const Icon = item.icon;
-                const active = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-                      active
-                        ? "bg-slate-900 text-white dark:bg-slate-800 dark:text-white"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Badge de Identidade Visual Rápida do Perfil (Cor da Fita META) */}
-            <div
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-xs ${roleConfig.badgeClass}`}
-            >
-              <RoleIcon className="h-3.5 w-3.5" />
-              <span>{roleConfig.shortLabel}</span>
+              <nav className="hidden md:flex items-center gap-1 ml-4 pl-4 border-l border-slate-200 dark:border-slate-800">
+                {navLinks.map((item) => {
+                  const Icon = item.icon;
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        active
+                          ? "bg-slate-900 text-white dark:bg-slate-800 dark:text-white"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
             </div>
 
-            {/* Indicador de Credenciamento para Avaliador */}
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-xs ${roleConfig.badgeClass}`}
+              >
+                <RoleIcon className="h-3.5 w-3.5" />
+                <span>{roleConfig.shortLabel}</span>
+              </div>
+
+              <div className="hidden sm:flex flex-col text-right leading-tight">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 max-w-[160px] truncate">
+                  {user.name}
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                  {user.username}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                title="Alternar tema"
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isPending}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-rose-50 hover:text-rose-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Sair</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-5 pb-20 sm:px-6">
+          {children}
+        </main>
+
+        <DemoRoleSwitcher currentRole={user.role} currentUserName={user.name} />
+      </div>
+    );
+  }
+
+  // Shell Nativo Mobile Focado (Visitante, Avaliador, Expositor e Colaborador)
+  return (
+    <div className="min-h-dvh bg-slate-200/70 dark:bg-[#050811] flex justify-center">
+      <div className="relative flex min-h-dvh w-full max-w-[440px] flex-col bg-background text-foreground shadow-[0_0_50px_rgba(15,23,42,0.15)] md:border-x md:border-slate-200/80 dark:md:border-slate-800/80">
+        {/* Fita Superior Oficial de 3.5px */}
+        <div className="sticky top-0 z-40 h-[3.5px] w-full bg-meta-gradient" />
+
+        {/* App Bar Nativa Compacta (52px) */}
+        <header className="no-print sticky top-[3.5px] z-30 flex h-13 items-center justify-between border-b border-slate-200/80 bg-white/95 px-3.5 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#0F172A]/95">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link
+              href={roleConfig.defaultRoute}
+              className="shrink-0 focus:outline-none"
+            >
+              <MetaLogo compact />
+            </Link>
+            <div
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-2xs shrink-0 ${roleConfig.badgeClass}`}
+            >
+              <RoleIcon className="h-3 w-3" />
+              <span>{roleConfig.shortLabel}</span>
+            </div>
             {user.role === "AVALIADOR" && (
               <span
-                className={`hidden lg:inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
+                title={
                   user.isAccredited
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                    ? "Avaliador Credenciado"
+                    : "Credenciamento Pendente"
+                }
+                className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
+                  user.isAccredited
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                 }`}
               >
                 {user.isAccredited ? (
-                  <>
-                    <CheckCircle2 className="h-3 w-3" /> Credenciado
-                  </>
+                  <CheckCircle2 className="h-3.5 w-3.5" />
                 ) : (
-                  <>
-                    <AlertCircle className="h-3 w-3" /> Credenciamento Pendente
-                  </>
+                  <AlertCircle className="h-3.5 w-3.5" />
                 )}
               </span>
             )}
+          </div>
 
-            {/* Nome do Usuário */}
-            <div className="hidden sm:flex flex-col text-right leading-tight">
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 max-w-[160px] truncate">
-                {user.name}
-              </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                {user.username}
-              </span>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <span className="max-w-[92px] truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {user.name.split(" ")[0]}
+            </span>
 
-            {/* Alternador Light / Dark Mode */}
+            <Link
+              href="/cronograma"
+              title="Mapa & Catálogo Geral"
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border transition ${
+                pathname === "/cronograma"
+                  ? "border-[#1565C0] bg-[#1565C0]/10 text-[#1565C0] dark:text-[#60A5FA]"
+                  : "border-slate-200/80 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              }`}
+            >
+              <CalendarDays className="h-4 w-4" />
+            </Link>
+
             <button
               type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              title="Alternar tema Claro / Escuro"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              title="Alternar tema"
             >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Alternar tema</span>
+              <Sun className="h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </button>
 
-            {/* Sair */}
             <button
               type="button"
               onClick={handleLogout}
               disabled={isPending}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
-              title="Trocar conta ou sair"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              title="Sair"
             >
               <LogOut className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">Sair</span>
             </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Conteúdo Principal */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 pb-24 sm:px-6 md:pb-12">
-        {children}
-      </main>
+        {/* Área de Conteúdo Mobile (com padding p/ Bottom Bar e Pílula Demo) */}
+        <main className="flex-1 px-3.5 pt-3 pb-28">{children}</main>
 
-      {/* Bottom Navigation Bar Fixa no Mobile (<768px) */}
-      <nav className="no-print fixed inset-x-0 bottom-0 z-30 flex h-16 items-center justify-around border-t border-slate-200 bg-white/95 px-2 backdrop-blur-md dark:border-slate-800 dark:bg-[#0F172A]/95 md:hidden">
-        {navLinks.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[11px] font-semibold transition-colors ${
-                active
-                  ? "text-[#1565C0] dark:text-[#60A5FA]"
-                  : "text-slate-500 dark:text-slate-400"
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Pílula Flutuante do Modo Apresentação para Professora */}
-      <DemoRoleSwitcher currentRole={user.role} currentUserName={user.name} />
+        {/* Pílula Flutuante do Modo Apresentação */}
+        <DemoRoleSwitcher
+          currentRole={user.role}
+          currentUserName={user.name}
+        />
+      </div>
     </div>
   );
 }

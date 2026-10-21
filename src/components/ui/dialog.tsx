@@ -26,9 +26,9 @@ const DialogOverlay = React.forwardRef<
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 /**
- * Responsive Drawer / Modal:
- * No Mobile (<768px): Desliza de baixo para cima como um Bottom Sheet ergonômico (max-h-[90vh]).
- * No Desktop (>=768px): Abre como um Modal centralizado elegante.
+ * Native Mobile Bottom Sheet:
+ * Desliza de baixo para cima alinhado ao container mobile (max-w-[440px]),
+ * garantindo ergonomia de uma mão com alça superior (handle bar).
  */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
@@ -39,20 +39,16 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 grid w-full gap-4 border border-slate-200 bg-white p-5 shadow-2xl duration-200 dark:border-slate-800 dark:bg-[#0F172A] text-slate-900 dark:text-slate-50",
-        // Mobile Bottom Sheet
-        "inset-x-0 bottom-0 max-h-[92vh] overflow-y-auto rounded-t-2xl md:inset-auto",
-        // Desktop Centered Modal
-        "md:left-[50%] md:top-[50%] md:max-w-lg md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-xl",
+        "fixed inset-x-0 bottom-0 z-50 mx-auto grid w-full max-w-[440px] gap-3.5 rounded-t-3xl border border-slate-200 bg-white p-4 pb-6 shadow-2xl duration-200 dark:border-slate-800 dark:bg-[#0F172A] text-slate-900 dark:text-slate-50 max-h-[90dvh] overflow-y-auto",
         className
       )}
       {...props}
     >
-      {/* Alça visual de Bottom Sheet no Mobile */}
-      <div className="mx-auto mb-1 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700 md:hidden" />
+      {/* Alça visual de Bottom Sheet */}
+      <div className="mx-auto mb-0.5 h-1.5 w-11 rounded-full bg-slate-300 dark:bg-slate-700" />
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-500 opacity-80 transition-opacity hover:bg-slate-100 hover:opacity-100 focus:outline-none dark:text-slate-400 dark:hover:bg-slate-800">
-        <X className="h-5 w-5" />
+      <DialogPrimitive.Close className="absolute right-3.5 top-3.5 rounded-full bg-slate-100 p-1.5 text-slate-500 transition-opacity hover:bg-slate-200 hover:text-slate-800 focus:outline-none dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700">
+        <X className="h-4 w-4" />
         <span className="sr-only">Fechar</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -65,7 +61,7 @@ const DialogHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col space-y-1.5 text-left", className)}
+    className={cn("flex flex-col space-y-1 pr-8 text-left", className)}
     {...props}
   />
 );
@@ -78,7 +74,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "font-display text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-slate-50",
+      "font-display text-base font-bold leading-snug tracking-tight text-slate-900 dark:text-slate-50",
       className
     )}
     {...props}
@@ -92,7 +88,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-slate-600 dark:text-slate-400", className)}
+    className={cn("text-xs text-slate-600 dark:text-slate-400", className)}
     {...props}
   />
 ));

@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Check,
   KeyRound,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { TagRecord } from "@/db/local-store";
@@ -22,13 +23,6 @@ import type { UserRole } from "@/db/schema";
 import { MetaLogo } from "@/components/shared/meta-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   loginAction,
   registerVisitorAction,
@@ -49,51 +43,51 @@ const DEMO_CARDS: {
   icon: typeof ShieldCheck;
 }[] = [
   {
-    role: "MASTER",
-    title: "Organizador Master",
-    user: "master@cefetmg.br",
-    desc: "Cria/importa projetos SIGAA, gerencia avaliadores, tags e apuração de notas.",
-    color: "#6A1B4D",
-    icon: ShieldCheck,
-  },
-  {
-    role: "COLABORADOR",
-    title: "Colaborador Operacional",
-    user: "colaborador@cefetmg.br",
-    desc: "Credencia equipes/avaliadores, colhe assinaturas e debita selos por brindes.",
-    color: "#F57C00",
-    icon: ScanLine,
-  },
-  {
-    role: "EXPOSITOR",
-    title: "Expositor (#4821 NeuroGlove)",
-    user: "pedro.expositor",
-    desc: "Personaliza estande, emite QR Code dinâmico de selo e vê avaliadores.",
-    color: "#1565C0",
-    icon: Presentation,
+    role: "VISITANTE",
+    title: "Visitante (Passaporte META)",
+    user: "Beatriz • 3 selos cor + 1 P&B",
+    desc: "Coleta carimbos QR, recomendações e troca de brindes.",
+    color: "#D81B60",
+    icon: Stamp,
   },
   {
     role: "AVALIADOR",
-    title: "Avaliador Oficial",
-    user: "avaliador@cefetmg.br",
-    desc: "Escaneia estandes, preenche Ficha Padrão META e assina em 1 clique.",
+    title: "Avaliador Oficial (Banca)",
+    user: "Prof. Marcos • Assinatura 1-Click",
+    desc: "Escaneia estande, dá notas (1-5) e assina em 1 toque.",
     color: "#1E3A8A",
     icon: ClipboardCheck,
   },
   {
-    role: "VISITANTE",
-    title: "Visitante (Passaporte META)",
-    user: "visitante@gmail.com",
-    desc: "Recebe recomendações por tags, coleta selos e vê selos gastos em P&B.",
-    color: "#D81B60",
-    icon: Stamp,
+    role: "EXPOSITOR",
+    title: "Expositor (#4821 NeuroGlove)",
+    user: "Pedro • Emissor de Selo 60s",
+    desc: "Gera QR dinâmico p/ visitantes, edita bio e vê banca.",
+    color: "#1565C0",
+    icon: Presentation,
+  },
+  {
+    role: "COLABORADOR",
+    title: "Colaborador (Recepção/Brindes)",
+    user: "Lucas • Check-in e Troca P&B",
+    desc: "Credencia equipes/banca e debita selos por brindes.",
+    color: "#F57C00",
+    icon: ScanLine,
+  },
+  {
+    role: "MASTER",
+    title: "Organizador Master (Desktop/Web)",
+    user: "Profa. Helena • Painel Geral",
+    desc: "Importa SIGAA, distribui avaliadores e apura notas.",
+    color: "#6A1B4D",
+    icon: ShieldCheck,
   },
 ];
 
 export function LoginClientView({ tags }: LoginClientViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"demo" | "login" | "register">("demo");
 
   // Login State
   const [username, setUsername] = useState("");
@@ -110,7 +104,9 @@ export function LoginClientView({ tags }: LoginClientViewProps) {
 
   const toggleTag = (tagId: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
     );
   };
 
@@ -131,7 +127,7 @@ export function LoginClientView({ tags }: LoginClientViewProps) {
   const handleVisitorRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedTags.length === 0) {
-      toast.error("Selecione pelo menos 1 tema de interesse na triagem!");
+      toast.error("Selecione pelo menos 1 tema de interesse!");
       return;
     }
     startTransition(async () => {
@@ -145,7 +141,7 @@ export function LoginClientView({ tags }: LoginClientViewProps) {
         toast.error(res.error || "Não foi possível criar sua conta.");
         return;
       }
-      toast.success("Passaporte META criado com recomendações personalizadas!");
+      toast.success("Passaporte META criado com recomendações!");
       router.push(res.redirectTo || "/visitante");
       router.refresh();
     });
@@ -166,7 +162,7 @@ export function LoginClientView({ tags }: LoginClientViewProps) {
     startTransition(async () => {
       const res = await switchSpecificDemoUserAction("user-aval-3");
       if (res.success && res.redirectTo) {
-        toast.info("Abrindo fluxo de 1º Acesso do Avaliador (Troca de senha + Assinatura)");
+        toast.info("Simulando 1º Acesso de Avaliador com senha provisória!");
         router.push(res.redirectTo);
         router.refresh();
       }
@@ -174,277 +170,271 @@ export function LoginClientView({ tags }: LoginClientViewProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Barra Superior no Gradiente 35ª META */}
-      <div className="h-1 w-full bg-meta-gradient" />
+    <div className="min-h-dvh bg-slate-200/70 dark:bg-[#050811] flex justify-center">
+      <div className="relative flex min-h-dvh w-full max-w-[440px] flex-col bg-background text-foreground shadow-[0_0_50px_rgba(15,23,42,0.15)] md:border-x md:border-slate-200/80 dark:md:border-slate-800/80">
+        {/* Fita Oficial 35ª META */}
+        <div className="h-[3.5px] w-full bg-meta-gradient" />
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-4 py-8 sm:px-6 lg:py-12">
-        {/* Topo Institucional */}
-        <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <MetaLogo />
+        {/* Header Compacto do App */}
+        <header className="flex items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 py-3 dark:border-slate-800/80 dark:bg-[#0F172A]/95">
+          <MetaLogo compact />
           <Link
             href="/cronograma"
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
           >
-            <CalendarDays className="h-4 w-4 text-[#1565C0]" />
-            Ver Cronograma Oficial & Catálogo Público
+            <CalendarDays className="h-3.5 w-3.5 text-[#1565C0]" />
+            Mapa & Horários
           </Link>
-        </div>
+        </header>
 
-        <div className="grid gap-8 lg:grid-cols-12 items-start">
-          {/* Coluna Esquerda: Login ou Auto-Cadastro de Visitante com Triagem */}
-          <div className="lg:col-span-6">
-            <Card className="overflow-hidden border-slate-200/90 shadow-md dark:border-slate-800">
-              <div className="grid grid-cols-2 border-b border-slate-200 bg-slate-50/70 p-1.5 dark:border-slate-800 dark:bg-slate-900/60">
-                <button
-                  type="button"
-                  onClick={() => setMode("login")}
-                  className={`flex min-h-[44px] items-center justify-center gap-2 rounded-lg text-xs font-bold transition-all ${
-                    mode === "login"
-                      ? "bg-white text-[#1565C0] shadow-xs dark:bg-slate-800 dark:text-white"
-                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
-                  }`}
-                >
-                  <LogIn className="h-4 w-4" />
-                  Entrar na Plataforma
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("register")}
-                  className={`flex min-h-[44px] items-center justify-center gap-2 rounded-lg text-xs font-bold transition-all ${
-                    mode === "register"
-                      ? "bg-[#D81B60] text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
-                  }`}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Sou Visitante (Criar Passaporte)
-                </button>
-              </div>
-
-              {mode === "login" ? (
-                <>
-                  <CardHeader>
-                    <CardTitle className="text-xl">
-                      Acesso Único — 35ª META
-                    </CardTitle>
-                    <CardDescription>
-                      Entre com seu usuário, matrícula SIGAA ou e-mail. Senha padrão das contas de teste:{" "}
-                      <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-900 dark:bg-slate-800 dark:text-slate-200">
-                        meta2026
-                      </code>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleLogin} className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          Usuário, Matrícula ou E-mail
-                        </label>
-                        <Input
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          placeholder="Ex: avaliador@cefetmg.br ou pedro.expositor"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          Senha de Acesso
-                        </label>
-                        <Input
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••"
-                          required
-                        />
-                      </div>
-                      <Button
-                        type="submit"
-                        size="field"
-                        disabled={isPending}
-                        className="w-full"
-                      >
-                        <LogIn className="h-4 w-4" />
-                        {isPending ? "Autenticando..." : "Acessar Plataforma"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </>
-              ) : (
-                <>
-                  <CardHeader>
-                    <CardTitle className="text-xl flex items-center gap-2">
-                      <Stamp className="h-5 w-5 text-[#D81B60]" />
-                      Criar Passaporte META + Triagem
-                    </CardTitle>
-                    <CardDescription>
-                      Cadastre-se em segundos, escolha seus temas favoritos para receber recomendações de estandes e colete selos!
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleVisitorRegister} className="space-y-4">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            Seu Nome Completo
-                          </label>
-                          <Input
-                            value={visitorName}
-                            onChange={(e) => setVisitorName(e.target.value)}
-                            placeholder="Ex: Ana Clara Souza"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            E-mail ou Usuário
-                          </label>
-                          <Input
-                            value={visitorEmail}
-                            onChange={(e) => setVisitorEmail(e.target.value)}
-                            placeholder="ana@email.com"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          Crie uma Senha
-                        </label>
-                        <Input
-                          type="password"
-                          value={visitorPassword}
-                          onChange={(e) => setVisitorPassword(e.target.value)}
-                          placeholder="Mínimo de 4 caracteres"
-                          required
-                        />
-                      </div>
-
-                      {/* Quiz Rápido de Triagem de Interesses */}
-                      <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                            🎯 Quiz de Triagem: O que você mais quer ver na META?
-                          </span>
-                          <span className="text-[11px] font-semibold text-[#D81B60]">
-                            {selectedTags.length} selecionado(s)
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Usaremos essas tags para recomendar os projetos ideais para você visitar:
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {tags.map((tag) => {
-                            const selected = selectedTags.includes(tag.id);
-                            return (
-                              <button
-                                key={tag.id}
-                                type="button"
-                                onClick={() => toggleTag(tag.id)}
-                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
-                                  selected
-                                    ? "bg-[#D81B60] text-white shadow-xs"
-                                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                }`}
-                              >
-                                {selected && <Check className="h-3.5 w-3.5" />}
-                                {tag.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <Button
-                        type="submit"
-                        variant="magenta"
-                        size="field"
-                        disabled={isPending}
-                        className="w-full"
-                      >
-                        <Stamp className="h-4 w-4" />
-                        {isPending
-                          ? "Emitindo Passaporte..."
-                          : "Criar Meu Passaporte Digital"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </>
-              )}
-            </Card>
+        <main className="flex-1 space-y-3.5 px-3.5 py-4">
+          {/* Segmented Switcher de 3 Modos no Topo */}
+          <div className="grid grid-cols-3 rounded-xl bg-slate-200/75 p-1 dark:bg-slate-900">
+            <button
+              type="button"
+              onClick={() => setMode("demo")}
+              className={`inline-flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold transition ${
+                mode === "demo"
+                  ? "bg-white text-slate-900 shadow-2xs dark:bg-slate-800 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-[#D81B60]" />
+              Demo Rápida
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className={`inline-flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold transition ${
+                mode === "login"
+                  ? "bg-white text-slate-900 shadow-2xs dark:bg-slate-800 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              <LogIn className="h-3.5 w-3.5 text-[#1565C0]" />
+              Entrar
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("register")}
+              className={`inline-flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold transition ${
+                mode === "register"
+                  ? "bg-[#D81B60] text-white shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Visitante
+            </button>
           </div>
 
-          {/* Coluna Direita: Painel de Acesso Instantâneo aos 5 Perfis para Apresentação */}
-          <div className="lg:col-span-6 space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-[#0F172A]">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#D81B60]" />
-                <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">
-                  Acesso Rápido de Demonstração (5 Perfis)
-                </h2>
-              </div>
-              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                Clique em qualquer perfil abaixo para entrar imediatamente sem digitar senha (você também pode alternar a qualquer momento pela pílula flutuante no canto inferior direito):
-              </p>
+          {/* MODO 1: ACESSO RÁPIDO 1-CLIQUE AOS 5 PERFIS */}
+          {mode === "demo" && (
+            <div className="space-y-2.5">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#D81B60]">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Simulador Oficial • 35ª META CEFET-MG
+                </div>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  Toque em qualquer perfil para testar a jornada mobile em tempo
+                  real:
+                </p>
 
-              <div className="mt-4 grid gap-2.5">
-                {DEMO_CARDS.map((card) => {
-                  const Icon = card.icon;
-                  return (
-                    <button
-                      key={card.role}
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => handleQuickDemo(card.role)}
-                      className="group flex w-full items-center gap-3.5 rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-left transition-all hover:border-slate-400 hover:bg-white hover:shadow-xs dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-slate-700 dark:hover:bg-slate-900"
-                    >
-                      <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-xs transition-transform group-hover:scale-105"
-                        style={{ backgroundColor: card.color }}
+                <div className="mt-3 space-y-2">
+                  {DEMO_CARDS.map((card) => {
+                    const Icon = card.icon;
+                    return (
+                      <button
+                        key={card.role}
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => handleQuickDemo(card.role)}
+                        className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/60 p-2.5 text-left transition active:scale-[0.98] hover:border-slate-300 hover:bg-white dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-900"
                       >
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-display text-sm font-bold text-slate-900 dark:text-white">
-                            {card.title}
-                          </span>
-                          <span className="rounded bg-slate-200/80 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                            {card.user}
-                          </span>
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
+                          style={{ backgroundColor: card.color }}
+                        >
+                          <Icon className="h-5 w-5" />
                         </div>
-                        <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
-                          {card.desc}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="truncate font-display text-xs font-bold text-slate-900 dark:text-white">
+                              {card.title}
+                            </span>
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+                          </div>
+                          <div className="font-mono text-[10px] font-semibold text-slate-500">
+                            {card.user}
+                          </div>
+                          <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-600 dark:text-slate-400">
+                            {card.desc}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
 
-              {/* Botão especial para demonstrar o Onboarding de 1º Acesso do Avaliador */}
-              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
+                {/* Botão p/ Testar 1º Acesso com Senha Provisória */}
                 <button
                   type="button"
                   disabled={isPending}
                   onClick={handleFirstAccessDemo}
-                  className="flex w-full items-center justify-between rounded-xl border border-dashed border-[#1E3A8A]/40 bg-[#1E3A8A]/5 px-3.5 py-2.5 text-left text-xs font-semibold text-[#1E3A8A] transition hover:bg-[#1E3A8A]/10 dark:border-[#818CF8]/40 dark:bg-[#818CF8]/10 dark:text-[#818CF8]"
+                  className="mt-2.5 flex w-full items-center justify-between rounded-xl border border-dashed border-[#1E3A8A]/40 bg-[#1E3A8A]/5 px-3 py-2.5 text-left text-xs font-semibold text-[#1E3A8A] transition active:scale-98 dark:border-[#818CF8]/40 dark:bg-[#818CF8]/10 dark:text-[#818CF8]"
                 >
                   <span className="flex items-center gap-2">
-                    <KeyRound className="h-4 w-4" />
-                    Demonstrar 1º Acesso de Avaliador (Trocar Senha Provisória + Desenhar Assinatura no Canvas)
+                    <KeyRound className="h-4 w-4 shrink-0" />
+                    <span>Testar 1º Acesso (Senha Provisória + Assinatura)</span>
                   </span>
-                  <span className="shrink-0 rounded bg-[#1E3A8A] px-2 py-0.5 font-mono text-[10px] text-white">
-                    Testar
-                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0" />
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+
+          {/* MODO 2: LOGIN COM CREDENCIAIS */}
+          {mode === "login" && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]">
+              <h2 className="font-display text-base font-bold">
+                Entrar na Plataforma
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Use seu login institucional, código SIGAA ou e-mail de
+                visitante.
+              </p>
+
+              <form onSubmit={handleLogin} className="mt-3.5 space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-bold">
+                    Usuário ou E-mail
+                  </label>
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Ex: pedro.expositor ou visitante@gmail.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold">
+                    Senha (ou Provisória)
+                  </label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Ex: 123456"
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="field"
+                  disabled={isPending}
+                  className="w-full rounded-xl"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Acessar Painel
+                </Button>
+              </form>
+            </div>
+          )}
+
+          {/* MODO 3: CRIAR PASSAPORTE DE VISITANTE + TRIAGEM */}
+          {mode === "register" && (
+            <div className="rounded-2xl border border-[#D81B60]/30 bg-white p-4 shadow-2xs dark:border-[#F472B6]/30 dark:bg-[#0F172A]">
+              <h2 className="font-display text-base font-bold text-[#D81B60] dark:text-[#F472B6]">
+                Novo Passaporte 35ª META
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Crie seu passe digital em 15 segundos e receba recomendações de
+                estandes!
+              </p>
+
+              <form
+                onSubmit={handleVisitorRegister}
+                className="mt-3 space-y-3"
+              >
+                <div>
+                  <label className="mb-1 block text-xs font-bold">
+                    Seu Nome
+                  </label>
+                  <Input
+                    value={visitorName}
+                    onChange={(e) => setVisitorName(e.target.value)}
+                    placeholder="Ex: Mariana Costa"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-bold">
+                      E-mail / Login
+                    </label>
+                    <Input
+                      value={visitorEmail}
+                      onChange={(e) => setVisitorEmail(e.target.value)}
+                      placeholder="mariana@email.com"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-bold">
+                      Senha Rápida
+                    </label>
+                    <Input
+                      type="password"
+                      value={visitorPassword}
+                      onChange={(e) => setVisitorPassword(e.target.value)}
+                      placeholder="******"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold">
+                    Quais áreas você mais curte? ({selectedTags.length}{" "}
+                    escolhidas)
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((tag) => {
+                      const active = selectedTags.includes(tag.id);
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => toggleTag(tag.id)}
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                            active
+                              ? "border-[#D81B60] bg-[#D81B60] text-white"
+                              : "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                          }`}
+                        >
+                          {active && <Check className="h-3 w-3" />}
+                          {tag.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="magenta"
+                  size="field"
+                  disabled={isPending}
+                  className="w-full rounded-xl"
+                >
+                  <Stamp className="h-4 w-4" />
+                  Abrir Meu Passaporte Digital
+                </Button>
+              </form>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

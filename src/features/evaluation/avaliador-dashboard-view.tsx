@@ -12,10 +12,11 @@ import {
   Users,
   PenTool,
   AlertTriangle,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { EvaluationRecord, ProjectRecord } from "@/db/local-store";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { QrScannerSheet } from "@/components/shared/qr-scanner-sheet";
 import { SignatureCanvasBox } from "@/components/shared/signature-canvas-box";
+import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { submitProjectEvaluationAction } from "@/features/evaluation/actions";
 import { signEvaluatorAccreditationAction } from "@/features/accreditation/actions";
 
@@ -46,36 +48,37 @@ interface AvaliadorDashboardViewProps {
   projects: AssignedEvalProject[];
 }
 
+type EvaluatorTab = "pendentes" | "concluidos" | "credencial" | "guia";
+
 const SCORE_CRITERIA = [
   {
     key: "scoreLogbook" as const,
-    title: "1. Diário de Bordo / Caderno de Campo (Obrigatório META)",
-    subtitle:
-      "Registros cronológicos das etapas, experimentos, datas e autenticidade da equipe.",
+    shortTitle: "1. Diário de Bordo / Caderno de Campo",
+    subtitle: "Registros cronológicos das etapas e autenticidade (Obrigatório)",
     highlight: true,
   },
   {
     key: "scoreRelevance" as const,
-    title: "2. Relevância Científica, Tecnológica e Originalidade",
-    subtitle: "Clareza do problema, inovação e impacto social ou técnico.",
+    shortTitle: "2. Relevância Científica e Inovação",
+    subtitle: "Clareza do problema, originalidade e impacto técnico/social",
     highlight: false,
   },
   {
     key: "scoreMethodology" as const,
-    title: "3. Metodologia Científica e Rigor Técnico",
-    subtitle: "Fundamentação teórica, método experimental e análise de resultados.",
+    shortTitle: "3. Metodologia e Rigor Técnico",
+    subtitle: "Fundamentação teórica, método experimental e resultados",
     highlight: false,
   },
   {
     key: "scorePresentation" as const,
-    title: "4. Domínio do Conteúdo e Clareza na Apresentação Oral",
-    subtitle: "Postura, capacidade de síntese e segurança ao responder arguições.",
+    shortTitle: "4. Apresentação Oral e Arguição",
+    subtitle: "Domínio do conteúdo, síntese e segurança nas respostas",
     highlight: false,
   },
   {
     key: "scoreStand" as const,
-    title: "5. Organização Visual do Estande, Banner e Protótipo",
-    subtitle: "Qualidade gráfica do pôster, demonstração prática e recursos visuais.",
+    shortTitle: "5. Estande, Banner e Protótipo",
+    subtitle: "Organização visual, pôster e demonstração prática",
     highlight: false,
   },
 ];
@@ -84,12 +87,14 @@ export function AvaliadorDashboardView({
   evaluator,
   projects,
 }: AvaliadorDashboardViewProps) {
+  const [activeTab, setActiveTab] = useState<EvaluatorTab>("pendentes");
   const [isPending, startTransition] = useTransition();
   const [scannerOpen, setScannerOpen] = useState(false);
 
-  // Projeto atualmente aberto na Ficha Oficial de Avaliação
+  // Projeto atualmente aberto na Ficha Oficial de Avaliação + Etapa do Wizard Mobile
   const [activeProject, setActiveProject] =
     useState<AssignedEvalProject | null>(null);
+  const [evalStep, setEvalStep] = useState<1 | 2>(1);
 
   const [scores, setScores] = useState({
     scoreLogbook: 5,
@@ -113,13 +118,14 @@ export function AvaliadorDashboardView({
   const openEvaluationModalByProject = (proj: AssignedEvalProject) => {
     if (!evaluator.isAccredited) {
       toast.error(
-        "Você precisa realizar seu Credenciamento na Recepção antes de avaliar projetos!"
+        "Realize seu Credenciamento na aba 'Credencial' ou na Recepção antes de avaliar!"
       );
+      setActiveTab("credencial");
       return;
     }
     if (!proj.isAccredited) {
       toast.error(
-        `O projeto #${proj.shortCode} (${proj.title}) ainda não realizou o Credenciamento na Recepção!`
+        `O estande #${proj.shortCode} ainda não fez check-in na Recepção!`
       );
       return;
     }
@@ -135,6 +141,7 @@ export function AvaliadorDashboardView({
       scoreStand: 5,
     });
     setFeedbackNotes("");
+    setEvalStep(1);
     setActiveProject(proj);
   };
 
@@ -159,20 +166,19 @@ export function AvaliadorDashboardView({
         feedbackNotes,
         signatureData,
       });
-
       if (!res.success) {
-        toast.error(res.error || "Erro ao salvar avaliação.");
+        toast.error(res.error || "Erro ao registrar avaliação.");
         return;
       }
-
       toast.success(
-        `Avaliação do projeto #${activeProject.shortCode} concluída com nota ${res.totalScore}/25!`
+        `Avaliação do projeto #${activeProject.shortCode} assinada (${res.totalScore}/25 pts)!`
       );
       setActiveProject(null);
+      setActiveTab("concluidos");
     });
   };
 
-  const handleSelfAccreditEvaluator = (signatureData: string) => {
+  const handleSignOwnAccreditation = (signatureData: string) => {
     startTransition(async () => {
       const res = await signEvaluatorAccreditationAction({
         evaluatorId: evaluator.id,
@@ -180,7 +186,7 @@ export function AvaliadorDashboardView({
       });
       if (res.success) {
         toast.success(
-          "Credenciamento confirmado! Sua carteira de avaliações foi desbloqueada."
+          "Credenciamento de Avaliador confirmado! Ficha liberada."
         );
       } else {
         toast.error(res.error);
@@ -189,331 +195,522 @@ export function AvaliadorDashboardView({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho Avaliador (Azul Marinho META #1E3A8A) */}
-      <div className="rounded-2xl border border-[#1E3A8A]/30 bg-white p-6 shadow-xs dark:border-[#818CF8]/30 dark:bg-[#0F172A]">
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1E3A8A]/10 px-3 py-1 text-xs font-bold text-[#1E3A8A] dark:bg-[#818CF8]/20 dark:text-[#818CF8]">
-                <ClipboardCheck className="h-3.5 w-3.5" />
-                Banca Avaliadora Oficial • 35ª META
-              </span>
-              {evaluator.isAccredited ? (
-                <Badge variant="success">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Avaliador Credenciado
-                </Badge>
-              ) : (
-                <Badge variant="danger">
-                  <Lock className="h-3.5 w-3.5" /> Credenciamento Pendente
-                </Badge>
-              )}
-            </div>
-            <h1 className="mt-2 font-display text-2xl font-bold sm:text-3xl">
-              Carteira de Avaliações — {evaluator.name}
+    <div className="space-y-3.5">
+      {/* Header Compacto Mobile da Banca Avaliadora */}
+      <div className="rounded-2xl border border-[#1E3A8A]/25 bg-white p-3.5 shadow-xs dark:border-[#818CF8]/25 dark:bg-[#0F172A]">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#1E3A8A]/10 px-2 py-0.5 text-[10px] font-bold text-[#1E3A8A] dark:bg-[#818CF8]/20 dark:text-[#818CF8]">
+              <ClipboardCheck className="h-3 w-3" />
+              Banca Oficial • 35ª META
+            </span>
+            <h1 className="mt-1 truncate font-display text-base font-bold text-slate-900 dark:text-white">
+              {evaluator.name}
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Escaneie o QR Code na folha do estande ou digite o código numérico curto de 4 dígitos para abrir a Ficha Padrão META.
-            </p>
           </div>
 
-          <Button
+          <button
             type="button"
-            size="field"
-            onClick={() => setScannerOpen(true)}
-            className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white"
+            onClick={() => setActiveTab("credencial")}
+            className={`shrink-0 rounded-xl border px-2.5 py-1.5 text-right transition ${
+              evaluator.isAccredited
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+            }`}
           >
-            <QrCode className="h-4 w-4" />
-            Ler QR Code / Digitar Código do Estande
-          </Button>
+            <div className="text-[9px] font-bold uppercase opacity-80">
+              Status
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-bold">
+              {evaluator.isAccredited ? (
+                <>
+                  <CheckCircle2 className="h-3 w-3" /> Credenciado
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-3 w-3" /> Check-in
+                </>
+              )}
+            </div>
+          </button>
         </div>
 
-        {/* Barra de Progresso da Carteira */}
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs dark:border-slate-800 dark:bg-slate-900">
-          <span className="font-semibold text-slate-700 dark:text-slate-300">
-            Progresso da sua Banca:
+        {/* Barra de Progresso Compacta da Banca */}
+        <div className="mt-3 flex items-center justify-between text-[11px]">
+          <span className="font-semibold text-slate-600 dark:text-slate-300">
+            Progresso de avaliações:
           </span>
-          <span className="font-mono text-sm font-bold text-[#1565C0] dark:text-[#60A5FA]">
-            {completedProjects.length} de {projects.length} projetos avaliados
+          <span className="font-mono font-bold text-[#1E3A8A] dark:text-[#818CF8]">
+            {completedProjects.length} de {projects.length} concluídas
           </span>
+        </div>
+        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div
+            className="h-full rounded-full bg-[#1E3A8A] transition-all dark:bg-[#6366F1]"
+            style={{
+              width: `${
+                projects.length > 0
+                  ? (completedProjects.length / projects.length) * 100
+                  : 0
+              }%`,
+            }}
+          />
         </div>
       </div>
 
-      {/* Caso o Avaliador ainda não esteja credenciado */}
-      {!evaluator.isAccredited && (
-        <Card className="border-amber-500/40 bg-amber-50/70 dark:border-amber-700 dark:bg-amber-950/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-amber-900 dark:text-amber-200">
-              <AlertTriangle className="h-5 w-5" />
-              {evaluator.accreditationUnlocked
-                ? "Assinatura de Presença Liberada pela Recepção!"
-                : "Credenciamento na Recepção Necessário"}
-            </CardTitle>
-            <CardDescription className="text-amber-800 dark:text-amber-300">
-              {evaluator.accreditationUnlocked
-                ? "Confirme sua assinatura abaixo com 1 clique para desbloquear todas as avaliações da sua carteira:"
-                : "Dirija-se à Recepção (Colaborador) para confirmar sua presença antes de avaliar os trabalhos."}
-            </CardDescription>
-          </CardHeader>
-          {evaluator.accreditationUnlocked && (
-            <CardContent>
-              <SignatureCanvasBox
-                initialSignature={evaluator.savedSignatureData}
-                confirmLabel="Confirmar Minha Presença em 1 Clique"
-                onSaveSignature={handleSelfAccreditEvaluator}
-              />
-            </CardContent>
-          )}
-        </Card>
+      {/* Alerta se Credenciamento Pendente */}
+      {!evaluator.isAccredited && activeTab !== "credencial" && (
+        <button
+          type="button"
+          onClick={() => setActiveTab("credencial")}
+          className="flex w-full items-center justify-between rounded-2xl border border-amber-500/40 bg-amber-50 p-3 text-left text-xs text-amber-950 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200"
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+            <span>
+              <strong>Check-in pendente:</strong> Toque aqui para assinar seu
+              credenciamento antes de avaliar.
+            </span>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </button>
       )}
 
-      {/* Lista 1: Projetos Pendentes de Avaliação */}
-      <section className="space-y-3">
-        <h2 className="font-display text-lg font-bold flex items-center gap-2">
-          <Clock className="h-5 w-5 text-[#F57C00]" />
-          Projetos Pendentes na Sua Carteira ({pendingProjects.length})
-        </h2>
+      {/* =========================================================
+          ABA 1: PENDENTES DE AVALIAÇÃO
+         ========================================================= */}
+      {activeTab === "pendentes" && (
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between px-0.5">
+            <h2 className="font-display text-xs font-bold uppercase tracking-wider text-slate-500">
+              Estandes Aguardando Avaliação ({pendingProjects.length})
+            </h2>
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              className="text-[11px] font-bold text-[#1E3A8A] dark:text-[#818CF8]"
+            >
+              Digitar #Código
+            </button>
+          </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {pendingProjects.map((proj) => {
-            const canEvaluate = evaluator.isAccredited && proj.isAccredited;
-            return (
-              <Card
-                key={proj.id}
-                className="flex flex-col justify-between border-slate-200 dark:border-slate-800"
-              >
-                <CardHeader className="pb-3">
+          {pendingProjects.length === 0 ? (
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
+              <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-600" />
+              <p className="mt-2 font-display text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                Todas as avaliações concluídas!
+              </p>
+              <p className="mt-0.5 text-xs text-emerald-800 dark:text-emerald-300">
+                Veja os comprovantes assinados na aba &ldquo;Avaliados&rdquo;.
+              </p>
+            </div>
+          ) : (
+            pendingProjects.map((proj) => {
+              const canEval = evaluator.isAccredited && proj.isAccredited;
+              return (
+                <div
+                  key={proj.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]"
+                >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-md bg-slate-900 px-2.5 py-1 font-mono text-xs font-bold text-white dark:bg-slate-800">
-                      #{proj.shortCode}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="rounded-lg bg-[#1E3A8A] px-2 py-0.5 font-mono text-xs font-bold text-white">
+                        #{proj.shortCode}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        SIGAA {proj.sigaaCode}
+                      </span>
+                    </div>
                     {proj.isAccredited ? (
-                      <Badge variant="success">
-                        <CheckCircle2 className="h-3 w-3" /> Estande Credenciado
-                      </Badge>
+                      <Badge variant="success">Estande Pronto</Badge>
                     ) : (
-                      <Badge variant="danger">
-                        <Lock className="h-3 w-3" /> Equipe Não Credenciada
-                      </Badge>
+                      <Badge variant="warning">Sem Check-in</Badge>
                     )}
                   </div>
-                  <CardTitle className="mt-2 text-base">{proj.title}</CardTitle>
-                  <CardDescription className="flex items-center gap-1.5 pt-1">
-                    <MapPin className="h-3.5 w-3.5 text-[#D81B60]" />
-                    {proj.standLocation} ({proj.shift})
-                  </CardDescription>
-                </CardHeader>
 
-                <CardContent className="space-y-3 text-xs">
-                  <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
-                    <Users className="h-3.5 w-3.5 text-[#1565C0]" />
-                    <span>Expositores: {proj.expositores.join(", ")}</span>
-                  </div>
+                  <h3 className="mt-2 font-display text-sm font-bold leading-snug text-slate-900 dark:text-white">
+                    {proj.title}
+                  </h3>
 
-                  {canEvaluate ? (
-                    <Button
-                      type="button"
-                      size="field"
-                      onClick={() => openEvaluationModalByProject(proj)}
-                      className="w-full"
-                    >
-                      <ClipboardCheck className="h-4 w-4" />
-                      Iniciar Ficha de Avaliação (#{proj.shortCode})
-                    </Button>
-                  ) : (
-                    <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs font-medium text-rose-700 dark:text-rose-300">
-                      {!evaluator.isAccredited
-                        ? "🔒 Bloqueado: Faça seu credenciamento na recepção primeiro."
-                        : "🔒 Bloqueado: A equipe deste projeto (#7540) ainda não realizou o credenciamento na recepção."}
+                  <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-[#D81B60]" />
+                      <span className="font-medium">
+                        {proj.standLocation} ({proj.shift})
+                      </span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                    <div className="flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 shrink-0 text-[#1565C0]" />
+                      <span className="truncate">
+                        {proj.expositores.join(", ")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant={canEval ? "navy" : "outline"}
+                    size="sm"
+                    onClick={() => openEvaluationModalByProject(proj)}
+                    className="mt-3 w-full rounded-xl"
+                  >
+                    {canEval ? (
+                      <>
+                        <ClipboardCheck className="h-4 w-4" />
+                        Abrir Ficha de Avaliação
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="h-3.5 w-3.5" />
+                        Aguardando Credenciamento
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })
+          )}
         </div>
-      </section>
-
-      {/* Lista 2: Projetos Já Avaliados por Mim */}
-      {completedProjects.length > 0 && (
-        <section className="space-y-3 pt-2">
-          <h2 className="font-display text-lg font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-            <CheckCircle2 className="h-5 w-5" />
-            Projetos Já Avaliados por Você ({completedProjects.length})
-          </h2>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {completedProjects.map((proj) => (
-              <Card
-                key={proj.id}
-                className="border-emerald-500/30 bg-emerald-50/20 dark:border-emerald-800/40 dark:bg-emerald-950/10"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold">
-                      #{proj.shortCode}
-                    </span>
-                    <Badge variant="success">
-                      Nota Final: {proj.myEvaluation?.totalScore} / 25 pts
-                    </Badge>
-                  </div>
-                  <CardTitle className="mt-1 text-base">{proj.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                  <div className="flex flex-wrap gap-2 font-mono text-[11px]">
-                    <span className="rounded bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
-                      Diário de Bordo: {proj.myEvaluation?.scoreLogbook}/5
-                    </span>
-                    <span className="rounded bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
-                      Relevância: {proj.myEvaluation?.scoreRelevance}/5
-                    </span>
-                    <span className="rounded bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
-                      Metodologia: {proj.myEvaluation?.scoreMethodology}/5
-                    </span>
-                  </div>
-                  {proj.myEvaluation?.feedbackNotes && (
-                    <p className="italic text-slate-700 dark:text-slate-300">
-                      &ldquo;{proj.myEvaluation.feedbackNotes}&rdquo;
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
       )}
 
-      {/* Modal: Ficha Oficial de Avaliação META (Botões Rápidos de Toque 0 a 5 + Assinatura 1-Click) */}
+      {/* =========================================================
+          ABA 2: AVALIADOS (HISTÓRICO E NOTAS)
+         ========================================================= */}
+      {activeTab === "concluidos" && (
+        <div className="space-y-2.5">
+          <h2 className="px-0.5 font-display text-xs font-bold uppercase tracking-wider text-slate-500">
+            Fichas Assinadas ({completedProjects.length})
+          </h2>
+
+          {completedProjects.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-[#0F172A]">
+              Nenhuma ficha enviada ainda.
+            </div>
+          ) : (
+            completedProjects.map((proj) => {
+              const ev = proj.myEvaluation!;
+              return (
+                <div
+                  key={proj.id}
+                  className="rounded-2xl border border-emerald-500/30 bg-white p-3.5 shadow-2xs dark:border-emerald-900/40 dark:bg-[#0F172A]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                      #{proj.shortCode} • Avaliado
+                    </span>
+                    <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-mono text-xs font-extrabold text-emerald-700 dark:text-emerald-300">
+                      {ev.totalScore} / 25 pts
+                    </span>
+                  </div>
+                  <h3 className="mt-1.5 font-display text-sm font-bold text-slate-900 dark:text-white">
+                    {proj.title}
+                  </h3>
+                  <div className="mt-2 grid grid-cols-5 gap-1 rounded-xl bg-slate-50 p-2 text-center font-mono text-[10px] dark:bg-slate-900">
+                    <div>
+                      <div className="text-slate-400">Diário</div>
+                      <div className="font-bold">{ev.scoreLogbook}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400">Relev.</div>
+                      <div className="font-bold">{ev.scoreRelevance}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400">Metod.</div>
+                      <div className="font-bold">{ev.scoreMethodology}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400">Apres.</div>
+                      <div className="font-bold">{ev.scorePresentation}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400">Estande</div>
+                      <div className="font-bold">{ev.scoreStand}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* =========================================================
+          ABA 3: CREDENCIAL & ASSINATURA 1-CLIQUE
+         ========================================================= */}
+      {activeTab === "credencial" && (
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#0F172A]">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-sm font-bold">
+                Status na Recepção
+              </h2>
+              {evaluator.isAccredited ? (
+                <Badge variant="success">Credenciado</Badge>
+              ) : (
+                <Badge variant="warning">Pendente</Badge>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              {evaluator.isAccredited
+                ? "Sua presença na banca já foi validada pela Recepção."
+                : "Dirija-se à Recepção ou assine abaixo caso o Colaborador tenha liberado no seu celular."}
+            </p>
+
+            {!evaluator.isAccredited && evaluator.accreditationUnlocked && (
+              <div className="mt-3">
+                <SignatureCanvasBox
+                  initialSignature={evaluator.savedSignatureData}
+                  confirmLabel="Confirmar Check-in de Avaliador"
+                  onSaveSignature={handleSignOwnAccreditation}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#0F172A]">
+            <div className="flex items-center gap-2">
+              <PenTool className="h-4 w-4 text-[#1E3A8A] dark:text-[#818CF8]" />
+              <h3 className="font-display text-sm font-bold">
+                Sua Assinatura 1-Clique
+              </h3>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Cadastrada no seu onboarding para validar fichas em pé com 1 toque:
+            </p>
+            {evaluator.savedSignatureData ? (
+              <div className="mt-3 flex flex-col items-center rounded-xl border border-slate-200 bg-[#F8FAFC] p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={evaluator.savedSignatureData}
+                  alt="Assinatura Salva"
+                  className="max-h-16 object-contain"
+                />
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-amber-600">
+                Nenhuma assinatura pré-salva. Você assinará na tela ao enviar a
+                ficha.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          ABA 4: GUIA DOS CRITÉRIOS META
+         ========================================================= */}
+      {activeTab === "guia" && (
+        <div className="space-y-2.5">
+          <div className="rounded-2xl border border-[#1E3A8A]/25 bg-[#1E3A8A]/5 p-3.5 text-xs dark:bg-[#1E3A8A]/15">
+            <div className="flex items-center gap-1.5 font-display font-bold text-[#1E3A8A] dark:text-[#818CF8]">
+              <BookOpen className="h-4 w-4" />
+              Regra Oficial de Avaliação (25 pts)
+            </div>
+            <p className="mt-1 text-slate-600 dark:text-slate-300">
+              Cada um dos 5 critérios vale de <strong>1 a 5 pontos</strong>. A
+              verificação presencial do <strong>Diário de Bordo</strong> no
+              estande é obrigatória.
+            </p>
+          </div>
+
+          {SCORE_CRITERIA.map((c) => (
+            <div
+              key={c.key}
+              className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-[#0F172A]"
+            >
+              <div className="font-display text-xs font-bold text-slate-900 dark:text-white">
+                {c.shortTitle}
+              </div>
+              <p className="mt-0.5 text-[11px] text-slate-500">{c.subtitle}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* =========================================================
+          BOTTOM SHEET: FICHA DE AVALIAÇÃO PASSO A PASSO (2 ETAPAS)
+         ========================================================= */}
       <Dialog
         open={Boolean(activeProject)}
-        onOpenChange={(o) => !o && setActiveProject(null)}
+        onOpenChange={(v) => !v && setActiveProject(null)}
       >
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent>
           {activeProject && (
             <>
               <DialogHeader>
                 <div className="flex items-center justify-between">
-                  <Badge variant="default">
+                  <span className="rounded-md bg-[#1E3A8A] px-2 py-0.5 font-mono text-[11px] font-bold text-white">
                     Estande #{activeProject.shortCode}
-                  </Badge>
-                  <span className="font-mono text-lg font-extrabold text-[#1565C0] dark:text-[#60A5FA]">
-                    Soma: {totalCurrentScore} / 25 pts
+                  </span>
+                  <span className="rounded-full bg-[#1E3A8A]/10 px-2.5 py-0.5 font-mono text-xs font-extrabold text-[#1E3A8A] dark:bg-[#818CF8]/20 dark:text-[#818CF8]">
+                    Nota: {totalCurrentScore} / 25
                   </span>
                 </div>
-                <DialogTitle className="mt-1 text-lg">
+                <DialogTitle className="mt-1 line-clamp-1">
                   {activeProject.title}
                 </DialogTitle>
                 <DialogDescription>
-                  Toque nas pílulas numéricas de 0 a 5 para pontuar cada critério oficial da 35ª META e finalize com sua assinatura em 1 clique.
+                  Etapa {evalStep} de 2 —{" "}
+                  {evalStep === 1
+                    ? "Atribua notas de 1 a 5 em cada critério"
+                    : "Parecer opcional e Assinatura Oficial"}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
-                {SCORE_CRITERIA.map((crit) => {
-                  const currentVal = scores[crit.key];
-                  return (
-                    <div
-                      key={crit.key}
-                      className={`rounded-xl border p-3.5 ${
-                        crit.highlight
-                          ? "border-[#1565C0]/40 bg-[#1565C0]/5 dark:border-[#3B82F6]/40 dark:bg-[#1E3A8A]/20"
-                          : "border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-1.5 font-display text-xs font-bold text-slate-900 dark:text-white">
-                          {crit.highlight && (
-                            <BookOpen className="h-4 w-4 text-[#1565C0] dark:text-[#60A5FA]" />
-                          )}
-                          {crit.title}
-                        </span>
-                        <span className="font-mono text-xs font-bold text-[#1565C0] dark:text-[#60A5FA]">
-                          {currentVal} / 5
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                        {crit.subtitle}
-                      </p>
+              {evalStep === 1 ? (
+                <div className="space-y-2.5">
+                  {SCORE_CRITERIA.map((criterion) => {
+                    const currentVal = scores[criterion.key];
+                    return (
+                      <div
+                        key={criterion.key}
+                        className={`rounded-xl border p-2.5 ${
+                          criterion.highlight
+                            ? "border-[#1E3A8A]/40 bg-[#1E3A8A]/5 dark:border-[#818CF8]/40 dark:bg-[#1E3A8A]/15"
+                            : "border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/60"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-display text-xs font-bold text-slate-900 dark:text-white">
+                            {criterion.shortTitle}
+                          </span>
+                          <span className="font-mono text-xs font-extrabold text-[#1E3A8A] dark:text-[#818CF8]">
+                            {currentVal}/5
+                          </span>
+                        </div>
 
-                      {/* Pílulas de Toque Rápido 0 a 5 (Altura >= 48px) */}
-                      <div className="mt-2.5 grid grid-cols-6 gap-1.5">
-                        {[0, 1, 2, 3, 4, 5].map((num) => {
-                          const selected = currentVal === num;
-                          return (
-                            <button
-                              key={num}
-                              type="button"
-                              onClick={() =>
-                                setScores((prev) => ({
-                                  ...prev,
-                                  [crit.key]: num,
-                                }))
-                              }
-                              className={`flex min-h-[48px] items-center justify-center rounded-xl font-mono text-base font-extrabold transition-all active:scale-95 ${
-                                selected
-                                  ? "bg-[#1565C0] text-white shadow-sm ring-2 ring-[#1565C0]/40"
-                                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                              }`}
-                            >
-                              {num}
-                            </button>
-                          );
-                        })}
+                        <div className="mt-2 grid grid-cols-5 gap-1.5">
+                          {[1, 2, 3, 4, 5].map((val) => {
+                            const selected = currentVal === val;
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() =>
+                                  setScores((prev) => ({
+                                    ...prev,
+                                    [criterion.key]: val,
+                                  }))
+                                }
+                                className={`flex h-9 items-center justify-center rounded-lg border font-mono text-xs font-extrabold transition active:scale-95 ${
+                                  selected
+                                    ? "border-[#1E3A8A] bg-[#1E3A8A] text-white shadow-2xs dark:border-[#6366F1] dark:bg-[#6366F1]"
+                                    : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                                }`}
+                              >
+                                {val}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
 
-                <div>
-                  <label className="mb-1 block text-xs font-semibold">
-                    Parecer / Observações da Avaliação (Opcional)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={feedbackNotes}
-                    onChange={(e) => setFeedbackNotes(e.target.value)}
-                    placeholder="Ex: Excelente protótipo funcional e diário de bordo muito bem documentado."
-                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs dark:border-slate-800 dark:bg-slate-950"
-                  />
+                  <Button
+                    type="button"
+                    variant="navy"
+                    size="field"
+                    onClick={() => setEvalStep(2)}
+                    className="w-full rounded-xl"
+                  >
+                    Avançar para Assinatura ({totalCurrentScore}/25 pts)
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
+              ) : (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setEvalStep(1)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#1E3A8A] dark:text-[#818CF8]"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Voltar e ajustar notas ({totalCurrentScore}/25 pts)
+                  </button>
 
-                {/* Fechamento com Assinatura Salva em 1 Clique (ou redesenhar) */}
-                <div className="border-t border-slate-200 pt-3 dark:border-slate-800">
-                  <div className="mb-2 flex items-center gap-1.5 text-xs font-bold">
-                    <PenTool className="h-3.5 w-3.5 text-[#1565C0]" />
-                    Assinatura Oficial do Avaliador:
+                  <div>
+                    <label className="mb-1 block text-xs font-bold">
+                      Observações para a Comissão (Opcional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={feedbackNotes}
+                      onChange={(e) => setFeedbackNotes(e.target.value)}
+                      placeholder="Destaque pontos fortes do protótipo e Diário de Bordo..."
+                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] dark:border-slate-800 dark:bg-slate-950"
+                    />
                   </div>
+
                   <SignatureCanvasBox
                     initialSignature={evaluator.savedSignatureData}
-                    confirmLabel={
-                      isPending
-                        ? "Registrando Avaliação..."
-                        : `Assinar em 1 Clique e Concluir (${totalCurrentScore}/25 pts)`
-                    }
+                    confirmLabel={`Finalizar Ficha (${totalCurrentScore}/25 pts)`}
                     onSaveSignature={handleSubmitEvaluation}
                   />
                 </div>
-              </div>
+              )}
             </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Scanner QR Code ou Código Numérico do Estande */}
+      {/* Scanner QR / Código Curto do Estande */}
       <QrScannerSheet
         open={scannerOpen}
         onOpenChange={setScannerOpen}
-        title="Identificar Estande para Avaliação"
-        description="Escaneie o QR Code na folha do estande ou digite os 4 dígitos abaixo:"
-        placeholder="Ex: 4821"
+        title="Avaliar Estande por QR / Código"
+        description="Escaneie a placa do estande ou digite o código de 4 dígitos."
+        placeholder="Ex: 4821, 1042, 3190"
+        presets={[
+          {
+            label: "#4821 NeuroGlove",
+            sublabel: "Estande credenciado e pronto",
+            code: "4821",
+          },
+          {
+            label: "#3190 BioFiltro",
+            sublabel: "Estande credenciado e pronto",
+            code: "3190",
+          },
+        ]}
         onCodeSubmit={handleScanCode}
-        presets={pendingProjects
-          .filter((p) => p.isAccredited)
-          .map((p) => ({
-            label: p.title,
-            sublabel: p.standLocation,
-            code: p.shortCode,
-          }))}
+      />
+
+      {/* Bottom Bar Nativa do Avaliador */}
+      <MobileBottomNav
+        tabs={[
+          {
+            id: "pendentes",
+            label: "Pendentes",
+            icon: Clock,
+            badge: pendingProjects.length,
+          },
+          {
+            id: "concluidos",
+            label: "Avaliados",
+            icon: CheckCircle2,
+            badge: completedProjects.length,
+          },
+          {
+            id: "credencial",
+            label: "Credencial",
+            icon: PenTool,
+          },
+          {
+            id: "guia",
+            label: "Critérios",
+            icon: BookOpen,
+          },
+        ]}
+        activeTab={activeTab}
+        onSelectTab={(id) => setActiveTab(id as EvaluatorTab)}
+        centerAction={{
+          label: "Avaliar QR",
+          icon: QrCode,
+          colorHex: "#1E3A8A",
+          onClick: () => setScannerOpen(true),
+        }}
+        accentColorHex="#1E3A8A"
       />
     </div>
   );

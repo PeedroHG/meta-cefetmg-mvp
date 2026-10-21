@@ -20,17 +20,10 @@ import type {
   RewardRecord,
   TagRecord,
 } from "@/db/local-store";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { QrScannerSheet } from "@/components/shared/qr-scanner-sheet";
+import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import {
   collectProjectStampAction,
   toggleFavoriteStampProjectAction,
@@ -64,6 +57,9 @@ interface VisitanteDashboardViewProps {
   myInterestTagIds: string[];
 }
 
+type VisitorTab = "passaporte" | "explorar" | "brindes" | "carteira";
+type StampFilter = "all" | "colored" | "spent";
+
 export function VisitanteDashboardView({
   visitor,
   stamps,
@@ -72,10 +68,10 @@ export function VisitanteDashboardView({
   tags,
   myInterestTagIds,
 }: VisitanteDashboardViewProps) {
+  const [activeTab, setActiveTab] = useState<VisitorTab>("passaporte");
+  const [stampFilter, setStampFilter] = useState<StampFilter>("all");
   const [isPending, startTransition] = useTransition();
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [walletQrOpen, setWalletQrOpen] = useState(false);
-  const [triageOpen, setTriageOpen] = useState(false);
   const [selectedTags, setSelectedTags] =
     useState<string[]>(myInterestTagIds);
   const [justCollectedStampId, setJustCollectedStampId] = useState<
@@ -84,6 +80,12 @@ export function VisitanteDashboardView({
 
   const activeColoredStamps = stamps.filter((s) => !s.isSpent);
   const spentBwStamps = stamps.filter((s) => s.isSpent);
+
+  const filteredStamps = stamps.filter((s) => {
+    if (stampFilter === "colored") return !s.isSpent;
+    if (stampFilter === "spent") return s.isSpent;
+    return true;
+  });
 
   const handleCollectStamp = (code: string) => {
     startTransition(async () => {
@@ -98,9 +100,11 @@ export function VisitanteDashboardView({
 
       if (res.project) {
         setJustCollectedStampId(res.project.id);
+        setActiveTab("passaporte");
+        setStampFilter("all");
       }
       toast.success(
-        `🎉 Selo colorido do projeto "${res.project?.title}" carimbado no seu Passaporte META!`
+        `🎉 Selo colorido "${res.project?.title}" carimbado no Passaporte!`
       );
     });
   };
@@ -116,8 +120,7 @@ export function VisitanteDashboardView({
       await completeOnboardingAction({
         selectedTagIds: selectedTags,
       });
-      setTriageOpen(false);
-      toast.success("Suas preferências de recomendação foram atualizadas!");
+      toast.success("Interesses atualizados!");
     });
   };
 
@@ -125,394 +128,547 @@ export function VisitanteDashboardView({
     (p) => !p.alreadyCollected
   );
 
+  // Próxima meta de brinde
+  const nextReward =
+    rewards.find((r) => r.stampCost > activeColoredStamps.length) ||
+    rewards[rewards.length - 1];
+
   return (
-    <div className="space-y-6">
-      {/* Banner Passaporte META Digital (Magenta #D81B60) */}
-      <div className="rounded-2xl border border-[#D81B60]/30 bg-white p-6 shadow-xs dark:border-[#F472B6]/30 dark:bg-[#0F172A] bg-meta-halftone">
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-          <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#D81B60]/10 px-3 py-1 text-xs font-bold text-[#D81B60] dark:bg-[#F472B6]/20 dark:text-[#F472B6]">
-              <Stamp className="h-3.5 w-3.5" />
-              Passaporte Digital Oficial • 35ª META
+    <div className="space-y-3.5">
+      {/* Header Compacto Mobile: Saldo da Carteira em 1 Linha */}
+      <div className="rounded-2xl border border-[#D81B60]/25 bg-white p-3.5 shadow-xs dark:border-[#F472B6]/25 dark:bg-[#0F172A] bg-meta-halftone">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#D81B60]/10 px-2 py-0.5 text-[10px] font-bold text-[#D81B60] dark:bg-[#F472B6]/20 dark:text-[#F472B6]">
+                <Stamp className="h-3 w-3" />
+                Passaporte 35ª META
+              </span>
+              <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                #{visitor.visitorShortCode}
+              </span>
             </div>
-            <h1 className="mt-2 font-display text-2xl font-bold sm:text-3xl">
-              Passaporte de {visitor.name}
+            <h1 className="mt-1 truncate font-display text-base font-bold text-slate-900 dark:text-white">
+              Olá, {visitor.name.split(" ")[0]}!
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Visite os estandes recomendados, colete selos coloridos e troque por brindes exclusivos sem perder sua coleção histórica!
-            </p>
           </div>
 
-          <div className="flex flex-wrap gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              size="field"
-              onClick={() => setWalletQrOpen(true)}
-            >
-              <Gift className="h-4 w-4 text-[#F57C00]" />
-              QR da Carteira ({visitor.visitorShortCode})
-            </Button>
-            <Button
-              type="button"
-              variant="magenta"
-              size="field"
-              onClick={() => setScannerOpen(true)}
-            >
-              <QrCode className="h-4 w-4" />
-              Coletar Selo de Estande
-            </Button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab("carteira")}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left transition active:scale-95 dark:border-slate-800 dark:bg-slate-900"
+          >
+            <QrCode className="h-4 w-4 text-[#D81B60]" />
+            <div>
+              <div className="text-[9px] font-bold uppercase text-slate-400">
+                Passe QR
+              </div>
+              <div className="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-100">
+                {visitor.visitorShortCode}
+              </div>
+            </div>
+          </button>
         </div>
 
-        {/* Contadores Duplos da Carteira de Selos */}
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-[#D81B60]/30 bg-[#D81B60]/5 p-4 dark:bg-[#D81B60]/15">
-            <span className="text-xs font-semibold text-[#D81B60] dark:text-[#F472B6]">
-              🎨 Selos Coloridos (Disponíveis p/ Brinde)
-            </span>
-            <div className="mt-1 font-mono text-3xl font-extrabold text-[#D81B60] dark:text-[#F472B6]">
-              {activeColoredStamps.length} selo(s)
+        {/* 3 Pílulas de Saldo Compactas */}
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="rounded-xl border border-[#D81B60]/20 bg-[#D81B60]/5 px-2.5 py-1.5 text-center dark:bg-[#D81B60]/10">
+            <div className="font-mono text-lg font-extrabold leading-tight text-[#D81B60] dark:text-[#F472B6]">
+              {activeColoredStamps.length}
+            </div>
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+              Coloridos
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-              🖤 Selos em Preto e Branco (Já Trocados)
-            </span>
-            <div className="mt-1 font-mono text-3xl font-extrabold text-slate-700 dark:text-slate-300">
-              {spentBwStamps.length} selo(s)
+          <div className="rounded-xl border border-slate-200 bg-slate-100/70 px-2.5 py-1.5 text-center dark:border-slate-800 dark:bg-slate-900">
+            <div className="font-mono text-lg font-extrabold leading-tight text-slate-700 dark:text-slate-300">
+              {spentBwStamps.length}
+            </div>
+            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+              Trocados P&B
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-              🏆 Coleção Histórica Total Visitada
-            </span>
-            <div className="mt-1 font-mono text-3xl font-extrabold text-[#1565C0] dark:text-[#60A5FA]">
-              {stamps.length} / {recommendedProjects.length} estandes
+          <div className="rounded-xl border border-[#1565C0]/20 bg-[#1565C0]/5 px-2.5 py-1.5 text-center dark:bg-[#1565C0]/10">
+            <div className="font-mono text-lg font-extrabold leading-tight text-[#1565C0] dark:text-[#60A5FA]">
+              {stamps.length}
+            </div>
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+              Coleção Total
             </div>
           </div>
         </div>
       </div>
 
-      {/* SEÇÃO 1: Álbum de Selos Colecionáveis (Coloridos vs Preto e Branco) */}
-      <section className="space-y-4">
-        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="font-display text-xl font-bold flex items-center gap-2">
-              <Stamp className="h-5 w-5 text-[#D81B60]" />
-              Meu Álbum de Selos do Passaporte META ({stamps.length})
-            </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Selos vibrantes podem ser gastos no balcão de brindes. Selos já usados permanecem eternamente no seu álbum em <strong>Preto e Branco</strong>!
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stamps.map((stamp) => {
-            const isFresh = justCollectedStampId === stamp.projectId;
-            return (
-              <div
-                key={stamp.id}
-                className={`stamp-card relative flex flex-col items-center justify-between rounded-2xl border-2 p-4 text-center transition-all ${
-                  isFresh ? "animate-stamp-slam" : ""
-                } ${
-                  stamp.isSpent
-                    ? "border-dashed border-slate-300 bg-slate-100/80 dark:border-slate-800 dark:bg-slate-900/60"
-                    : "border-dashed border-[#D81B60]/40 bg-white shadow-sm dark:border-[#F472B6]/40 dark:bg-[#0F172A]"
-                }`}
-              >
-                {/* Badge de Status no Topo do Selo */}
-                <div className="flex w-full items-center justify-between text-[11px]">
-                  <span className="font-mono font-bold text-slate-500">
-                    #{stamp.projectShortCode}
-                  </span>
-                  {stamp.isSpent ? (
-                    <span className="rounded bg-slate-300 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-800 dark:bg-slate-800 dark:text-slate-300">
-                      USADO (P&B)
-                    </span>
-                  ) : (
-                    <span className="rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                      DISPONÍVEL
-                    </span>
-                  )}
-                </div>
-
-                {/* Arte Circular do Selo (Colorida se ativo; Grayscale P&B + Carimbo Diagonal se gasto) */}
-                <div className="relative my-3 flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={stamp.stampImageUrl}
-                    alt={stamp.projectTitle}
-                    className={`h-28 w-28 rounded-full object-contain transition-all ${
-                      stamp.isSpent
-                        ? "grayscale contrast-125 opacity-60"
-                        : "drop-shadow-md hover:scale-105"
-                    }`}
-                  />
-
-                  {stamp.isSpent && (
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <span className="-rotate-12 rounded border-2 border-slate-900 bg-white/95 px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider text-slate-900 shadow-xs">
-                        TROCA REALIZADA
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-full space-y-2">
-                  <h3 className="font-display text-xs font-bold leading-snug line-clamp-2">
-                    {stamp.projectTitle}
-                  </h3>
-
-                  {/* Voto Popular (Favoritar Projeto Visitado) */}
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => handleToggleFavorite(stamp.id)}
-                    className={`inline-flex w-full items-center justify-center gap-1.5 rounded-lg border py-1.5 text-[11px] font-semibold transition ${
-                      stamp.likedProject
-                        ? "border-[#D81B60]/30 bg-[#D81B60]/10 text-[#D81B60] dark:text-[#F472B6]"
-                        : "border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-800"
-                    }`}
-                  >
-                    <Heart
-                      className={`h-3.5 w-3.5 ${
-                        stamp.likedProject ? "fill-current" : ""
-                      }`}
-                    />
-                    {stamp.likedProject
-                      ? "Voto Popular Registrado"
-                      : "Votar como Favorito"}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* SEÇÃO 2: Recomendações Personalizadas por Tags de Interesse */}
-      <section className="space-y-4 pt-2">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="font-display text-xl font-bold flex items-center gap-2">
-              <Compass className="h-5 w-5 text-[#1565C0]" />
-              Estandes Recomendados para Você
-            </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Ordenados automaticamente com base nas tags que você escolheu no seu Quiz de Triagem.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setTriageOpen(true)}
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            Editar Meus Interesses ({myInterestTagIds.length})
-          </Button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {recommendedProjects.map((proj) => (
-            <Card
-              key={proj.id}
-              className={`flex flex-col justify-between ${
-                proj.matchCount > 0 && !proj.alreadyCollected
-                  ? "border-[#1565C0]/40 dark:border-[#3B82F6]/40"
-                  : ""
+      {/* =========================================================
+          ABA 1: PASSAPORTE (CADERNETA DE SELOS)
+         ========================================================= */}
+      {activeTab === "passaporte" && (
+        <div className="space-y-3">
+          {/* Segmented Control (Filtro Rápido de 1 Mão) */}
+          <div className="grid grid-cols-3 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-900">
+            <button
+              type="button"
+              onClick={() => setStampFilter("all")}
+              className={`rounded-lg py-1.5 text-xs font-bold transition ${
+                stampFilter === "all"
+                  ? "bg-white text-slate-900 shadow-2xs dark:bg-slate-800 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400"
               }`}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="rounded-md bg-slate-100 px-2.5 py-1 font-mono text-xs font-bold dark:bg-slate-800">
-                    #{proj.shortCode}
-                  </span>
-                  {proj.alreadyCollected ? (
-                    <Badge variant="success">
-                      <CheckCircle2 className="h-3 w-3" /> Selo Coletado
-                    </Badge>
-                  ) : proj.matchCount > 0 ? (
-                    <Badge variant="default">
-                      <Sparkles className="h-3 w-3" /> {proj.matchCount} Tag(s)
-                      em comum
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Sugestão Extra</Badge>
-                  )}
-                </div>
-                <CardTitle className="mt-2 text-base">{proj.title}</CardTitle>
-              </CardHeader>
+              Todos ({stamps.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStampFilter("colored")}
+              className={`rounded-lg py-1.5 text-xs font-bold transition ${
+                stampFilter === "colored"
+                  ? "bg-[#D81B60] text-white shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              Disponíveis ({activeColoredStamps.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStampFilter("spent")}
+              className={`rounded-lg py-1.5 text-xs font-bold transition ${
+                stampFilter === "spent"
+                  ? "bg-slate-800 text-white shadow-2xs dark:bg-slate-700"
+                  : "text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              Trocados ({spentBwStamps.length})
+            </button>
+          </div>
 
-              <CardContent className="space-y-3 text-xs">
-                <p className="text-slate-600 dark:text-slate-400 line-clamp-2">
-                  {proj.bio}
-                </p>
+          {/* Atalho Demo 1-Toque para Testar Carimbada */}
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-[#D81B60]/35 bg-[#D81B60]/5 px-3 py-2">
+            <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+              Simular carimbo:
+            </span>
+            <div className="flex items-center gap-1.5">
+              {["META35", "ROBO26", "SOLAR1"].map((token) => (
+                <button
+                  key={token}
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => handleCollectStamp(token)}
+                  className="rounded-lg border border-[#D81B60]/30 bg-white px-2 py-1 font-mono text-[10px] font-bold text-[#D81B60] shadow-2xs active:scale-95 dark:bg-slate-900 dark:text-[#F472B6]"
+                >
+                  +{token}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {proj.tags.map((t) => {
-                    const isMatch = myInterestTagIds.includes(t.id);
-                    return (
-                      <span
-                        key={t.id}
-                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                          isMatch
-                            ? "bg-[#D81B60]/15 text-[#D81B60] dark:text-[#F472B6]"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+          {/* Grid 2 Colunas Estilo Caderneta de Passaporte */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {filteredStamps.map((stamp, idx) => {
+              const isJustStamped = justCollectedStampId === stamp.projectId;
+              const rotationClass =
+                idx % 3 === 0
+                  ? "-rotate-2"
+                  : idx % 3 === 1
+                  ? "rotate-2"
+                  : "-rotate-1";
+
+              return (
+                <div
+                  key={stamp.id}
+                  className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border p-3 transition-all ${
+                    stamp.isSpent
+                      ? "border-dashed border-slate-300 bg-slate-100/80 dark:border-slate-800 dark:bg-slate-900/50"
+                      : "border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-[#0F172A]"
+                  } ${isJustStamped ? "animate-stamp-in ring-2 ring-[#D81B60]" : ""}`}
+                >
+                  {/* Topo: Código + Botão Favoritar */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] font-bold text-slate-400">
+                      #{stamp.projectShortCode}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFavorite(stamp.id)}
+                      className={`rounded-full p-1 transition ${
+                        stamp.likedProject
+                          ? "text-[#D81B60]"
+                          : "text-slate-300 hover:text-slate-500"
+                      }`}
+                    >
+                      <Heart
+                        className={`h-3.5 w-3.5 ${
+                          stamp.likedProject ? "fill-current" : ""
                         }`}
-                      >
-                        {t.name}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Arte do Carimbo Circular */}
+                  <div className="relative my-2 flex justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={stamp.stampImageUrl}
+                      alt={stamp.projectTitle}
+                      className={`h-20 w-20 rounded-full object-cover shadow-sm transition-transform ${rotationClass} ${
+                        stamp.isSpent
+                          ? "grayscale contrast-125 opacity-60"
+                          : "ring-2 ring-[#D81B60]/20"
+                      }`}
+                    />
+
+                    {/* Faixa Diagonal quando Gasto na Troca de Brinde */}
+                    {stamp.isSpent && (
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <span className="-rotate-12 rounded border border-slate-700 bg-slate-900/90 px-1.5 py-0.5 font-mono text-[8px] font-extrabold uppercase tracking-wider text-white shadow-xs">
+                          TROCA REALIZADA
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Rodapé do Carimbo */}
+                  <div className="text-center">
+                    <h3
+                      className={`line-clamp-1 font-display text-xs font-bold ${
+                        stamp.isSpent
+                          ? "text-slate-500 dark:text-slate-400"
+                          : "text-slate-900 dark:text-white"
+                      }`}
+                    >
+                      {stamp.projectTitle.split(":")[0]}
+                    </h3>
+                    <div className="mt-0.5 flex items-center justify-center gap-1 text-[10px] text-slate-500">
+                      <span
+                        className={`inline-block h-1.5 w-1.5 rounded-full ${
+                          stamp.isSpent ? "bg-slate-400" : "bg-emerald-500"
+                        }`}
+                      />
+                      <span>
+                        {stamp.isSpent ? "Recordação P&B" : "Válido p/ Brinde"}
                       </span>
-                    );
-                  })}
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-                <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-800">
-                  <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
-                    <MapPin className="h-3.5 w-3.5 text-[#D81B60]" />
-                    {proj.standLocation}
-                  </span>
-                </div>
+      {/* =========================================================
+          ABA 2: EXPLORAR (RECOMENDADOS POR TAGS)
+         ========================================================= */}
+      {activeTab === "explorar" && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white">
+                Recomendados para Você
+              </h2>
+              <p className="text-[11px] text-slate-500">
+                Baseado nas suas tags de interesse na 35ª META
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("carteira")}
+              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <SlidersHorizontal className="h-3 w-3 text-[#D81B60]" />
+              Tags ({selectedTags.length})
+            </button>
+          </div>
 
-                {!proj.alreadyCollected && (
+          {uncollectedProjects.length === 0 ? (
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
+              <CheckCircle2 className="mx-auto h-7 w-7 text-emerald-600" />
+              <p className="mt-1.5 font-display text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                Você gabaritou os projetos!
+              </p>
+              <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                Todos os selos da feira já estão no seu Passaporte.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {uncollectedProjects.map((proj) => (
+                <div
+                  key={proj.id}
+                  className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]"
+                >
+                  {/* Mini Preview do Selo */}
+                  {proj.stampImageUrl && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={proj.stampImageUrl}
+                      alt={proj.title}
+                      className="h-13 w-13 shrink-0 rounded-full border border-slate-200 object-cover"
+                    />
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[10px] font-bold text-[#1565C0] dark:text-[#60A5FA]">
+                        #{proj.shortCode}
+                      </span>
+                      {proj.matchCount > 0 && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#D81B60]/10 px-1.5 py-0.5 text-[9px] font-bold text-[#D81B60] dark:text-[#F472B6]">
+                          <Sparkles className="h-2.5 w-2.5" />
+                          {proj.matchCount} em comum
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="truncate font-display text-xs font-bold text-slate-900 dark:text-white">
+                      {proj.title}
+                    </h3>
+                    <div className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500">
+                      <MapPin className="h-3 w-3 shrink-0 text-[#D81B60]" />
+                      <span className="truncate">{proj.standLocation}</span>
+                    </div>
+                  </div>
+
                   <Button
                     type="button"
                     variant="magenta"
                     size="sm"
                     disabled={isPending}
                     onClick={() =>
-                      handleCollectStamp(proj.activeStampToken || proj.shortCode)
+                      handleCollectStamp(
+                        proj.activeStampToken || proj.shortCode
+                      )
                     }
-                    className="w-full"
+                    className="shrink-0 rounded-xl px-3 text-xs"
                   >
-                    <Stamp className="h-3.5 w-3.5" />
-                    Coletar Selo (#{proj.shortCode})
+                    Carimbar
                   </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* SEÇÃO 3: Catálogo de Brindes para Troca */}
-      <section className="space-y-3 pt-2">
-        <h2 className="font-display text-xl font-bold flex items-center gap-2">
-          <Gift className="h-5 w-5 text-[#F57C00]" />
-          Brindes Disponíveis no Balcão de Trocas
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {rewards.map((rew) => {
-            const enough = activeColoredStamps.length >= rew.stampCost;
-            return (
-              <Card key={rew.id} className="flex flex-col justify-between">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <Badge variant={enough ? "success" : "magenta"}>
-                      {rew.stampCost} selos ativos
-                    </Badge>
-                    <span className="font-mono text-[11px] text-slate-500">
-                      Restam {rew.stockQuantity}
-                    </span>
-                  </div>
-                  <CardTitle className="mt-2 text-sm">{rew.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs text-slate-500">
-                  <p>{rew.description}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Modal: QR Code da Carteira do Visitante para Apresentar no Balcão de Brindes */}
-      <Dialog open={walletQrOpen} onOpenChange={setWalletQrOpen}>
-        <DialogContent className="sm:max-w-sm text-center">
-          <DialogHeader>
-            <DialogTitle>Carteira Passaporte META</DialogTitle>
-            <DialogDescription>
-              Apresente este QR Code ou código ao Colaborador no Balcão de Brindes para trocar seus selos ativos!
-            </DialogDescription>
-          </DialogHeader>
-          <div className="my-3 flex flex-col items-center">
-            <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
-              <QRCodeSVG value={visitor.visitorShortCode} size={176} />
+                </div>
+              ))}
             </div>
-            <div className="mt-3 font-mono text-2xl font-extrabold text-[#D81B60]">
-              {visitor.visitorShortCode}
-            </div>
-            <span className="text-xs text-slate-500">
-              Saldo disponível: {activeColoredStamps.length} selo(s) colorido(s)
-            </span>
+          )}
+        </div>
+      )}
+
+      {/* =========================================================
+          ABA 3: BRINDES (META E REGRAS DE TROCA)
+         ========================================================= */}
+      {activeTab === "brindes" && (
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-[#F57C00]/30 bg-amber-50/70 p-3 text-xs text-amber-950 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200">
+            <p className="font-bold">✨ Troque sem perder sua coleção!</p>
+            <p className="mt-0.5 text-[11px] opacity-90">
+              Ao resgatar um brinde no balcão, seus selos usados viram{" "}
+              <strong>recordação Preto & Branco</strong> no Passaporte.
+            </p>
           </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Modal: Editar Tags de Interesse (Quiz de Triagem) */}
-      <Dialog open={triageOpen} onOpenChange={setTriageOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Personalizar Meus Temas de Interesse</DialogTitle>
-            <DialogDescription>
-              Selecione os assuntos que você mais gosta para recalcular suas recomendações de estandes:
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-wrap gap-2 py-2">
-            {tags.map((tag) => {
-              const active = selectedTags.includes(tag.id);
+          {nextReward && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-700 dark:text-slate-200">
+                  Seu saldo colorido atual:
+                </span>
+                <span className="font-mono font-extrabold text-[#D81B60]">
+                  {activeColoredStamps.length} selos disponíveis
+                </span>
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-meta-gradient transition-all"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (activeColoredStamps.length / nextReward.stampCost) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2.5">
+            {rewards.map((rw) => {
+              const canRedeem =
+                activeColoredStamps.length >= rw.stampCost &&
+                rw.stockQuantity > 0;
               return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() =>
-                    setSelectedTags((prev) =>
-                      prev.includes(tag.id)
-                        ? prev.filter((id) => id !== tag.id)
-                        : [...prev, tag.id]
-                    )
-                  }
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    active
-                      ? "bg-[#D81B60] text-white"
-                      : "border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                <div
+                  key={rw.id}
+                  className={`flex items-center justify-between gap-3 rounded-2xl border p-3.5 transition ${
+                    canRedeem
+                      ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20"
+                      : "border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0F172A]"
                   }`}
                 >
-                  {tag.name}
-                </button>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-lg bg-[#F57C00]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#F57C00]">
+                        {rw.stampCost} selos
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        Estoque: {rw.stockQuantity}
+                      </span>
+                    </div>
+                    <h3 className="mt-1 font-display text-sm font-bold text-slate-900 dark:text-white">
+                      {rw.name}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      {rw.description}
+                    </p>
+                  </div>
+
+                  {canRedeem ? (
+                    <Button
+                      type="button"
+                      variant="orange"
+                      size="sm"
+                      onClick={() => setActiveTab("carteira")}
+                      className="shrink-0 rounded-xl text-xs"
+                    >
+                      Resgatar
+                    </Button>
+                  ) : (
+                    <Badge variant="secondary" className="shrink-0">
+                      Faltam{" "}
+                      {Math.max(0, rw.stampCost - activeColoredStamps.length)}
+                    </Badge>
+                  )}
+                </div>
               );
             })}
           </div>
-          <Button
-            type="button"
-            variant="magenta"
-            size="field"
-            disabled={isPending}
-            onClick={handleSaveInterests}
-            className="w-full"
-          >
-            Atualizar Minhas Recomendações
-          </Button>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
-      {/* Scanner QR Code ou Digitação do Código Temporário do Expositor */}
+      {/* =========================================================
+          ABA 4: CARTEIRA QR & INTERESSES
+         ========================================================= */}
+      {activeTab === "carteira" && (
+        <div className="space-y-3.5">
+          {/* Passe QR Digital para apresentar na Estação de Brindes */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-xs dark:border-slate-800 dark:bg-[#0F172A]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#F57C00]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#F57C00]">
+              <Gift className="h-3 w-3" />
+              Apresente na Estação de Brindes
+            </span>
+            <div className="mx-auto my-3 flex w-fit flex-col items-center rounded-2xl border-2 border-slate-200 bg-white p-3.5 shadow-xs">
+              <QRCodeSVG value={visitor.visitorShortCode} size={168} />
+            </div>
+            <div className="font-mono text-2xl font-extrabold tracking-widest text-slate-900 dark:text-white">
+              {visitor.visitorShortCode}
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">
+              {activeColoredStamps.length} selos coloridos prontos para troca
+            </p>
+          </div>
+
+          {/* Seletor Compacto de Interesses */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-[#0F172A]">
+            <h3 className="font-display text-xs font-bold uppercase tracking-wider text-slate-500">
+              Meus Interesses na Feira
+            </h3>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {tags.map((tag) => {
+                const active = selectedTags.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedTags((prev) =>
+                        prev.includes(tag.id)
+                          ? prev.filter((id) => id !== tag.id)
+                          : [...prev, tag.id]
+                      )
+                    }
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                      active
+                        ? "border-[#D81B60] bg-[#D81B60] text-white"
+                        : "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                    }`}
+                  >
+                    {tag.name}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              type="button"
+              variant="magenta"
+              size="sm"
+              disabled={isPending}
+              onClick={handleSaveInterests}
+              className="mt-3 w-full rounded-xl"
+            >
+              Salvar Preferências
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Sheet de Leitura QR / Código Dinâmico */}
       <QrScannerSheet
         open={scannerOpen}
         onOpenChange={setScannerOpen}
-        title="Coletar Selo de Estande Visitado"
-        description="Escaneie o QR Code dinâmico na tela do expositor ou digite o código numérico:"
-        placeholder="Ex: 849201 ou 4821"
+        title="Carimbar Passaporte 35ª META"
+        description="Aponte para o QR Code dinâmico do estande ou digite o token de 6 caracteres."
+        placeholder="Ex: META35, ROBO26, SOLAR1"
+        presets={[
+          {
+            label: "Selo #4821 (NeuroGlove)",
+            sublabel: "Token ativo do estande",
+            code: "META35",
+          },
+          {
+            label: "Selo #1042 (AgroDrone)",
+            sublabel: "Token ativo do estande",
+            code: "ROBO26",
+          },
+          {
+            label: "Selo #3190 (BioFiltro)",
+            sublabel: "Token ativo do estande",
+            code: "SOLAR1",
+          },
+        ]}
         onCodeSubmit={handleCollectStamp}
-        presets={uncollectedProjects.map((p) => ({
-          label: p.title,
-          sublabel: `Token Dinâmico: ${p.activeStampToken || p.shortCode}`,
-          code: p.activeStampToken || p.shortCode,
-        }))}
+      />
+
+      {/* Barra de Navegação Inferior Nativa com Botão Central de Carimbar */}
+      <MobileBottomNav
+        tabs={[
+          {
+            id: "passaporte",
+            label: "Passaporte",
+            icon: Stamp,
+            badge: activeColoredStamps.length,
+          },
+          {
+            id: "explorar",
+            label: "Explorar",
+            icon: Compass,
+            badge: uncollectedProjects.length,
+          },
+          {
+            id: "brindes",
+            label: "Brindes",
+            icon: Gift,
+          },
+          {
+            id: "carteira",
+            label: "Meu QR",
+            icon: QrCode,
+          },
+        ]}
+        activeTab={activeTab}
+        onSelectTab={(id) => setActiveTab(id as VisitorTab)}
+        centerAction={{
+          label: "Carimbar",
+          icon: QrCode,
+          colorHex: "#D81B60",
+          onClick: () => setScannerOpen(true),
+        }}
+        accentColorHex="#D81B60"
       />
     </div>
   );

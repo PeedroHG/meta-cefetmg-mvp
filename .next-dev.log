@@ -1,0 +1,42 @@
+
+> meta-cefetmg-mvp@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.2.4
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.2.160:3000
+
+ ✓ Starting...
+ ✓ Ready in 1782ms
+ ○ Compiling / ...
+ ✓ Compiled / in 2.5s (745 modules)
+ ✓ Compiled in 422ms (324 modules)
+ GET / 307 in 2996ms
+ ○ Compiling /master ...
+ ✓ Compiled /master in 1164ms (1144 modules)
+ GET /master 200 in 1806ms
+ GET / 307 in 117ms
+ ✓ Compiled /login in 360ms (1161 modules)
+ GET /login 200 in 616ms
+ ✓ Compiled /api/realtime in 385ms (1177 modules)
+ GET /api/realtime 200 in 511ms
+ GET /api/realtime 200 in 5ms
+ GET /api/realtime 200 in 7ms
+ GET /api/realtime 200 in 7ms
+ GET /api/realtime 200 in 7ms
+ GET /api/realtime 200 in 9ms
+ GET /api/realtime 200 in 9ms
+ GET /api/realtime 200 in 6ms
+ GET /api/realtime 200 in 6ms
+ GET /api/realtime 200 in 8ms
+ GET /api/realtime 200 in 5ms
+ GET /api/realtime 200 in 6ms
+ GET /api/realtime 200 in 5ms
+ GET /api/realtime 200 in 6ms
+ GET /api/realtime 200 in 6ms
+ GET /api/realtime 200 in 7ms
+ GET /api/realtime 200 in 7ms
+ GET /api/realtime 200 in 6ms
+ GET /api/realtime 200 in 6ms
+ GET /api/realtime 200 in 7ms
+^C^C
