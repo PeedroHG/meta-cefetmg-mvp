@@ -12,29 +12,36 @@ export default async function ColaboradorPage() {
 
   const db = readDb();
 
+  // Enriquecer projetos com membros, status e assinaturas
   const projects = db.projects.map((p) => {
-    const expositores = db.projectMembers
-      .filter((pm) => pm.projectId === p.id && pm.memberRole === "EXPOSITOR")
+    const expositorMemberships = db.projectMembers.filter(
+      (pm) => pm.projectId === p.id && pm.memberRole === "EXPOSITOR"
+    );
+    const expositores = expositorMemberships
       .map((pm) => db.users.find((u) => u.id === pm.userId))
       .filter((u): u is NonNullable<typeof u> => Boolean(u));
 
-    const avaliadores = db.projectMembers
-      .filter((pm) => pm.projectId === p.id && pm.memberRole === "AVALIADOR")
+    const avaliadorMemberships = db.projectMembers.filter(
+      (pm) => pm.projectId === p.id && pm.memberRole === "AVALIADOR"
+    );
+    const avaliadores = avaliadorMemberships
       .map((pm) => {
-        const avalUser = db.users.find((u) => u.id === pm.userId);
+        const u = db.users.find((user) => user.id === pm.userId);
+        if (!u) return null;
         const hasEvaluated = db.evaluations.some(
-          (ev) => ev.projectId === p.id && ev.evaluatorId === pm.userId
+          (e) => e.projectId === p.id && e.evaluatorId === u.id
         );
         return {
-          id: pm.userId,
-          name: avalUser?.name || "Avaliador",
-          isAccredited: avalUser?.isAccredited ?? false,
+          id: u.id,
+          name: u.name,
+          isAccredited: u.isAccredited,
           hasEvaluated,
         };
-      });
+      })
+      .filter((a): a is NonNullable<typeof a> => Boolean(a));
 
     const signedByUser = p.accreditedByUserId
-      ? db.users.find((u) => u.id === p.accreditedByUserId)?.name || "Expositor"
+      ? db.users.find((u) => u.id === p.accreditedByUserId)?.name || null
       : null;
 
     return {
@@ -51,16 +58,26 @@ export default async function ColaboradorPage() {
 
   const evaluators = db.users
     .filter((u) => u.role === "AVALIADOR")
-    .map((u) => ({
-      id: u.id,
-      name: u.name,
-      username: u.username,
-      isAccredited: u.isAccredited,
-      accreditationUnlocked: u.accreditationUnlocked,
-      savedSignatureData: u.savedSignatureData,
-      accreditationSignature: u.accreditationSignature,
-      accreditedAt: u.accreditedAt,
-    }));
+    .map((u) => {
+      const assignedCount = db.projectMembers.filter(
+        (pm) => pm.userId === u.id && pm.memberRole === "AVALIADOR"
+      ).length;
+      const completedCount = db.evaluations.filter(
+        (e) => e.evaluatorId === u.id
+      ).length;
+      return {
+        id: u.id,
+        name: u.name,
+        username: u.username,
+        isAccredited: u.isAccredited,
+        accreditationUnlocked: u.accreditationUnlocked,
+        savedSignatureData: u.savedSignatureData,
+        accreditationSignature: u.accreditationSignature,
+        accreditedAt: u.accreditedAt,
+        assignedCount,
+        completedCount,
+      };
+    });
 
   const visitors = db.users
     .filter((u) => u.role === "VISITANTE")
@@ -81,6 +98,7 @@ export default async function ColaboradorPage() {
 
   return (
     <AppShell
+      hideHeader
       user={{
         id: user.id,
         name: user.name,
@@ -90,6 +108,10 @@ export default async function ColaboradorPage() {
       }}
     >
       <ColaboradorDashboardView
+        currentUser={{
+          id: user.id,
+          name: user.name,
+        }}
         projects={projects}
         evaluators={evaluators}
         visitors={visitors}

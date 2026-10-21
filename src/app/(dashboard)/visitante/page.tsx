@@ -11,42 +11,38 @@ export default async function VisitantePage() {
   }
 
   const db = readDb();
+  const visitorUser = db.users.find((u) => u.id === user.id) || user;
 
-  // Caso outro perfil acesse /visitante diretamente na demo, usa a visitante Beatriz (user-vis-1)
-  const visitorUser =
-    user.role === "VISITANTE"
-      ? user
-      : db.users.find((u) => u.id === "user-vis-1") || user;
-
+  // Interesses do visitante logado
   const myInterestTagIds = db.visitorInterests
-    .filter((vi) => vi.visitorId === visitorUser.id)
+    .filter((vi) => vi.visitorId === user.id)
     .map((vi) => vi.tagId);
 
-  const myStamps = db.passportStamps
-    .filter((s) => s.visitorId === visitorUser.id)
-    .map((s) => {
-      const proj = db.projects.find((p) => p.id === s.projectId);
-      return {
-        ...s,
-        projectTitle: proj?.title || "Projeto META",
-        projectShortCode: proj?.shortCode || "0000",
-        projectLocation: proj?.standLocation || "",
-        stampImageUrl: proj?.stampImageUrl || "",
-      };
-    });
+  // Selos já coletados pelo visitante
+  const rawStamps = db.passportStamps.filter((s) => s.visitorId === user.id);
+  const collectedProjectIds = new Set(rawStamps.map((s) => s.projectId));
 
-  const collectedProjectIds = new Set(myStamps.map((s) => s.projectId));
+  // Enriquecer selos com detalhes dos estandes
+  const myStamps = rawStamps.map((s) => {
+    const proj = db.projects.find((p) => p.id === s.projectId);
+    return {
+      ...s,
+      projectTitle: proj?.title || "Projeto da 35ª META",
+      projectShortCode: proj?.shortCode || "0000",
+      projectLocation: proj?.standLocation || "Pavilhão Central",
+      stampImageUrl: proj?.stampImageUrl || "",
+    };
+  });
 
+  // Projetos com afinidade de tags
   const enrichedProjects = db.projects.map((p) => {
     const pTagIds = db.projectTags
       .filter((pt) => pt.projectId === p.id)
       .map((pt) => pt.tagId);
     const projectTags = db.tags.filter((t) => pTagIds.includes(t.id));
-
-    const matchCount = pTagIds.filter((tid) =>
-      myInterestTagIds.includes(tid)
+    const matchCount = projectTags.filter((t) =>
+      myInterestTagIds.includes(t.id)
     ).length;
-
     const alreadyCollected = collectedProjectIds.has(p.id);
 
     return {
@@ -64,6 +60,7 @@ export default async function VisitantePage() {
 
   return (
     <AppShell
+      hideHeader
       user={{
         id: visitorUser.id,
         name: visitorUser.name,

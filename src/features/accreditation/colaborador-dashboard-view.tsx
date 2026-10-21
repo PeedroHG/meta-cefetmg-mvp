@@ -27,6 +27,7 @@ import {
 import { SignatureCanvasBox } from "@/components/shared/signature-canvas-box";
 import { QrScannerSheet } from "@/components/shared/qr-scanner-sheet";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
+import { UnifiedRoleHeader } from "@/components/shared/unified-role-header";
 import {
   unlockProjectAccreditationAction,
   signProjectAccreditationAction,
@@ -55,6 +56,8 @@ interface ColaboradorEvaluator {
   savedSignatureData: string | null;
   accreditationSignature: string | null;
   accreditedAt: string | null;
+  assignedCount?: number;
+  completedCount?: number;
 }
 
 interface ColaboradorVisitor {
@@ -68,6 +71,10 @@ interface ColaboradorVisitor {
 }
 
 interface ColaboradorDashboardViewProps {
+  currentUser: {
+    id: string;
+    name: string;
+  };
   projects: ColaboradorProject[];
   evaluators: ColaboradorEvaluator[];
   visitors: ColaboradorVisitor[];
@@ -77,6 +84,7 @@ interface ColaboradorDashboardViewProps {
 type ColaboradorTab = "projects" | "evaluators" | "rewards" | "resumo";
 
 export function ColaboradorDashboardView({
+  currentUser,
   projects,
   evaluators,
   visitors,
@@ -219,9 +227,16 @@ export function ColaboradorDashboardView({
   ).length;
 
   return (
-    <div className="space-y-3.5">
-      {/* Header Principal Nativo com Curva Inferior e Cor do Colaborador (#F57C00) */}
-      <div className="-mx-3.5 -mt-3 rounded-b-[28px] bg-gradient-to-br from-[#F57C00] via-[#EA580C] to-[#C2410C] px-4 pt-3.5 pb-4 text-white shadow-md">
+    <div>
+      {/* Header Unificado Nativo com Curva Inferior na Cor do Colaborador (#F57C00) */}
+      <UnifiedRoleHeader
+        user={{
+          id: currentUser.id,
+          name: currentUser.name,
+          role: "COLABORADOR",
+          isAccredited: true,
+        }}
+      >
         <div className="flex items-center justify-between gap-2">
           <div>
             <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs">
@@ -285,311 +300,314 @@ export function ColaboradorDashboardView({
             </div>
           </button>
         </div>
-      </div>
+      </UnifiedRoleHeader>
 
-      {/* =========================================================
-          ABA 1: CHECK-IN DE PROJETOS EXPOSITORES
-         ========================================================= */}
-      {tab === "projects" && (
-        <div className="space-y-2.5">
-          {/* Busca + Filtro Pendentes */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Código (#4821) ou aluno..."
-                className="h-10 pl-8 text-xs"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setOnlyPending(!onlyPending)}
-              className={`shrink-0 rounded-xl border px-3 text-xs font-bold transition ${
-                onlyPending
-                  ? "border-[#F57C00] bg-[#F57C00] text-white"
-                  : "border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-              }`}
-            >
-              Pendentes ({pendingProjectsCount})
-            </button>
-          </div>
-
-          {filteredProjects.map((proj) => (
-            <div
-              key={proj.id}
-              className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="rounded-md bg-slate-900 px-2 py-0.5 font-mono text-xs font-bold text-white dark:bg-slate-800">
-                  #{proj.shortCode}
-                </span>
-                {proj.isAccredited ? (
-                  <Badge variant="success">
-                    <CheckCircle2 className="h-3 w-3" /> Credenciado
-                  </Badge>
-                ) : (
-                  <Badge variant="warning">Falta Retirar Kit</Badge>
-                )}
+      {/* Conteúdo Abaixo do Header Curvo */}
+      <div className="px-3.5 pt-3.5 space-y-3.5">
+        {/* =========================================================
+            ABA 1: CHECK-IN DE PROJETOS EXPOSITORES
+           ========================================================= */}
+        {tab === "projects" && (
+          <div className="space-y-2.5">
+            {/* Busca + Filtro Pendentes */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Código (#4821) ou aluno..."
+                  className="h-10 pl-8 text-xs"
+                />
               </div>
+              <button
+                type="button"
+                onClick={() => setOnlyPending(!onlyPending)}
+                className={`shrink-0 rounded-xl border px-3 text-xs font-bold transition ${
+                  onlyPending
+                    ? "border-[#F57C00] bg-[#F57C00] text-white"
+                    : "border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                }`}
+              >
+                Pendentes ({pendingProjectsCount})
+              </button>
+            </div>
 
-              <h3 className="mt-1.5 font-display text-sm font-bold leading-snug text-slate-900 dark:text-white">
-                {proj.title}
-              </h3>
-              <p className="mt-0.5 text-[11px] text-slate-500">
-                {proj.standLocation} •{" "}
-                {proj.expositores.map((e) => e.name.split(" ")[0]).join(", ")}
-              </p>
-
-              {proj.isAccredited ? (
-                <div className="mt-2.5 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
-                  <span>Assinado por: {proj.signedByUser || "Equipe"}</span>
-                  {proj.accreditationSignature && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={proj.accreditationSignature}
-                      alt="Assinatura"
-                      className="h-5 rounded bg-white px-1"
-                    />
+            {filteredProjects.map((proj) => (
+              <div
+                key={proj.id}
+                className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="rounded-md bg-slate-900 px-2 py-0.5 font-mono text-xs font-bold text-white dark:bg-slate-800">
+                    #{proj.shortCode}
+                  </span>
+                  {proj.isAccredited ? (
+                    <Badge variant="success">
+                      <CheckCircle2 className="h-3 w-3" /> Credenciado
+                    </Badge>
+                  ) : (
+                    <Badge variant="warning">Falta Retirar Kit</Badge>
                   )}
                 </div>
-              ) : (
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isPending || proj.accreditationUnlocked}
-                    onClick={() =>
-                      handleUnlockProject(proj.id, proj.shortCode)
-                    }
-                    className="rounded-xl text-[11px]"
-                  >
-                    <Unlock className="h-3.5 w-3.5" />
-                    {proj.accreditationUnlocked
-                      ? "Liberado no App"
-                      : "Liberar no App"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="orange"
-                    size="sm"
-                    onClick={() => {
-                      setSigningProject(proj);
-                      setSelectedExhibitorId(proj.expositores[0]?.id || "");
-                    }}
-                    className="rounded-xl text-[11px]"
-                  >
-                    <PenTool className="h-3.5 w-3.5" />
-                    Assinar Aqui
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
 
-      {/* =========================================================
-          ABA 2: CHECK-IN DE AVALIADORES
-         ========================================================= */}
-      {tab === "evaluators" && (
-        <div className="space-y-2.5">
-          {evaluators.map((ev) => (
-            <div
-              key={ev.id}
-              className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white">
-                    {ev.name}
-                  </h3>
-                  <span className="font-mono text-[11px] text-slate-500">
-                    {ev.username}
-                  </span>
-                </div>
-                {ev.isAccredited ? (
-                  <Badge variant="success">Credenciado</Badge>
+                <h3 className="mt-1.5 font-display text-sm font-bold leading-snug text-slate-900 dark:text-white">
+                  {proj.title}
+                </h3>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  {proj.standLocation} •{" "}
+                  {proj.expositores.map((e) => e.name.split(" ")[0]).join(", ")}
+                </p>
+
+                {proj.isAccredited ? (
+                  <div className="mt-2.5 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
+                    <span>Assinado por: {proj.signedByUser || "Equipe"}</span>
+                    {proj.accreditationSignature && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={proj.accreditationSignature}
+                        alt="Assinatura"
+                        className="h-5 rounded bg-white px-1"
+                      />
+                    )}
+                  </div>
                 ) : (
-                  <Badge variant="warning">Pendente</Badge>
-                )}
-              </div>
-
-              {!ev.isAccredited && (
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isPending || ev.accreditationUnlocked}
-                    onClick={() => handleUnlockEvaluator(ev.id, ev.name)}
-                    className="rounded-xl text-[11px]"
-                  >
-                    <Unlock className="h-3.5 w-3.5" />
-                    {ev.accreditationUnlocked
-                      ? "Liberado no App"
-                      : "Liberar no App"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="navy"
-                    size="sm"
-                    onClick={() => setSigningEvaluator(ev)}
-                    className="rounded-xl text-[11px]"
-                  >
-                    <PenTool className="h-3.5 w-3.5" />
-                    Assinar Aqui
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* =========================================================
-          ABA 3: BALCÃO DE TROCA DE BRINDES (DÉBITO P&B)
-         ========================================================= */}
-      {tab === "rewards" && (
-        <div className="space-y-3">
-          {/* Busca ou Leitura QR da Carteira do Visitante */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-[#0F172A]">
-            <label className="mb-1.5 block text-xs font-bold">
-              Carteira do Visitante (Código ou QR)
-            </label>
-            <div className="flex gap-2">
-              <Input
-                value={visitorQuery}
-                onChange={(e) => setVisitorQuery(e.target.value)}
-                placeholder="Ex: V-3590"
-                className="h-10 font-mono text-xs"
-              />
-              <Button
-                type="button"
-                variant="orange"
-                size="sm"
-                onClick={() => setScannerOpen(true)}
-                className="shrink-0 rounded-xl px-3"
-              >
-                <QrCode className="h-4 w-4" />
-                Ler QR
-              </Button>
-            </div>
-
-            {selectedVisitor ? (
-              <div className="mt-3 rounded-xl border border-[#D81B60]/25 bg-[#D81B60]/5 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-display text-sm font-bold text-slate-900 dark:text-white">
-                    {selectedVisitor.name}
-                  </span>
-                  <span className="font-mono text-xs font-bold text-[#D81B60]">
-                    {selectedVisitor.visitorShortCode}
-                  </span>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-center">
-                  <div className="rounded-lg bg-white p-1.5 dark:bg-slate-900">
-                    <div className="font-mono text-base font-extrabold text-[#D81B60]">
-                      {selectedVisitor.activeStamps}
-                    </div>
-                    <div className="text-[10px] font-semibold text-slate-500">
-                      Selos Coloridos (Saldo)
-                    </div>
-                  </div>
-                  <div className="rounded-lg bg-white p-1.5 dark:bg-slate-900">
-                    <div className="font-mono text-base font-extrabold text-slate-600 dark:text-slate-300">
-                      {selectedVisitor.spentStamps}
-                    </div>
-                    <div className="text-[10px] font-semibold text-slate-500">
-                      Já Trocados (P&B)
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-rose-600">
-                Visitante não encontrado. Tente V-3590.
-              </p>
-            )}
-          </div>
-
-          {/* Lista de Brindes para Debitar Selos */}
-          {selectedVisitor && (
-            <div className="space-y-2">
-              {rewards.map((rw) => {
-                const canRedeem =
-                  selectedVisitor.activeStamps >= rw.stampCost &&
-                  rw.stockQuantity > 0;
-                return (
-                  <div
-                    key={rw.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-[#0F172A]"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-md bg-[#F57C00]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#F57C00]">
-                          -{rw.stampCost} selos
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          Estoque: {rw.stockQuantity}
-                        </span>
-                      </div>
-                      <h4 className="mt-1 font-display text-xs font-bold text-slate-900 dark:text-white">
-                        {rw.name}
-                      </h4>
-                    </div>
-
+                  <div className="mt-3 grid grid-cols-2 gap-2">
                     <Button
                       type="button"
-                      variant={canRedeem ? "orange" : "outline"}
+                      variant="outline"
                       size="sm"
-                      disabled={!canRedeem || isPending}
-                      onClick={() => handleRedeemReward(rw.id)}
-                      className="shrink-0 rounded-xl text-xs"
+                      disabled={isPending || proj.accreditationUnlocked}
+                      onClick={() =>
+                        handleUnlockProject(proj.id, proj.shortCode)
+                      }
+                      className="rounded-xl text-[11px]"
                     >
-                      {canRedeem ? "Entregar Brinde" : "Saldo Insuf."}
+                      <Unlock className="h-3.5 w-3.5" />
+                      {proj.accreditationUnlocked
+                        ? "Liberado no App"
+                        : "Liberar no App"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="orange"
+                      size="sm"
+                      onClick={() => {
+                        setSigningProject(proj);
+                        setSelectedExhibitorId(proj.expositores[0]?.id || "");
+                      }}
+                      className="rounded-xl text-[11px]"
+                    >
+                      <PenTool className="h-3.5 w-3.5" />
+                      Assinar Aqui
                     </Button>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* =========================================================
-          ABA 4: RESUMO OPERACIONAL DA RECEPÇÃO
-         ========================================================= */}
-      {tab === "resumo" && (
-        <div className="space-y-2.5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#0F172A]">
-            <h3 className="font-display text-sm font-bold">
-              Metas de Check-in da 35ª META
-            </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              Apenas projetos e avaliadores com check-in concluído podem emitir
-              e assinar fichas de avaliação.
-            </p>
-            <div className="mt-3 space-y-2 text-xs">
-              <div className="flex justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-slate-900">
-                <span>Estandes Credenciados</span>
-                <strong className="font-mono">
-                  {projects.filter((p) => p.isAccredited).length} de{" "}
-                  {projects.length}
-                </strong>
+                )}
               </div>
-              <div className="flex justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-slate-900">
-                <span>Avaliadores Credenciados</span>
-                <strong className="font-mono">
-                  {evaluators.filter((e) => e.isAccredited).length} de{" "}
-                  {evaluators.length}
-                </strong>
+            ))}
+          </div>
+        )}
+
+        {/* =========================================================
+            ABA 2: CHECK-IN DE AVALIADORES
+           ========================================================= */}
+        {tab === "evaluators" && (
+          <div className="space-y-2.5">
+            {evaluators.map((ev) => (
+              <div
+                key={ev.id}
+                className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-[#0F172A]"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white">
+                      {ev.name}
+                    </h3>
+                    <span className="font-mono text-[11px] text-slate-500">
+                      {ev.username}
+                    </span>
+                  </div>
+                  {ev.isAccredited ? (
+                    <Badge variant="success">Credenciado</Badge>
+                  ) : (
+                    <Badge variant="warning">Pendente</Badge>
+                  )}
+                </div>
+
+                {!ev.isAccredited && (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isPending || ev.accreditationUnlocked}
+                      onClick={() => handleUnlockEvaluator(ev.id, ev.name)}
+                      className="rounded-xl text-[11px]"
+                    >
+                      <Unlock className="h-3.5 w-3.5" />
+                      {ev.accreditationUnlocked
+                        ? "Liberado no App"
+                        : "Liberar no App"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="navy"
+                      size="sm"
+                      onClick={() => setSigningEvaluator(ev)}
+                      className="rounded-xl text-[11px]"
+                    >
+                      <PenTool className="h-3.5 w-3.5" />
+                      Assinar Aqui
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* =========================================================
+            ABA 3: BALCÃO DE TROCA DE BRINDES (DÉBITO P&B)
+           ========================================================= */}
+        {tab === "rewards" && (
+          <div className="space-y-3">
+            {/* Busca ou Leitura QR da Carteira do Visitante */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-[#0F172A]">
+              <label className="mb-1.5 block text-xs font-bold">
+                Carteira do Visitante (Código ou QR)
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={visitorQuery}
+                  onChange={(e) => setVisitorQuery(e.target.value)}
+                  placeholder="Ex: V-3590"
+                  className="h-10 font-mono text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="orange"
+                  size="sm"
+                  onClick={() => setScannerOpen(true)}
+                  className="shrink-0 rounded-xl px-3"
+                >
+                  <QrCode className="h-4 w-4" />
+                  Ler QR
+                </Button>
+              </div>
+
+              {selectedVisitor ? (
+                <div className="mt-3 rounded-xl border border-[#D81B60]/25 bg-[#D81B60]/5 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-sm font-bold text-slate-900 dark:text-white">
+                      {selectedVisitor.name}
+                    </span>
+                    <span className="font-mono text-xs font-bold text-[#D81B60]">
+                      {selectedVisitor.visitorShortCode}
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-center">
+                    <div className="rounded-lg bg-white p-1.5 dark:bg-slate-900">
+                      <div className="font-mono text-base font-extrabold text-[#D81B60]">
+                        {selectedVisitor.activeStamps}
+                      </div>
+                      <div className="text-[10px] font-semibold text-slate-500">
+                        Selos Coloridos (Saldo)
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-white p-1.5 dark:bg-slate-900">
+                      <div className="font-mono text-base font-extrabold text-slate-600 dark:text-slate-300">
+                        {selectedVisitor.spentStamps}
+                      </div>
+                      <div className="text-[10px] font-semibold text-slate-500">
+                        Já Trocados (P&B)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-rose-600">
+                  Visitante não encontrado. Tente V-3590.
+                </p>
+              )}
+            </div>
+
+            {/* Lista de Brindes para Debitar Selos */}
+            {selectedVisitor && (
+              <div className="space-y-2">
+                {rewards.map((rw) => {
+                  const canRedeem =
+                    selectedVisitor.activeStamps >= rw.stampCost &&
+                    rw.stockQuantity > 0;
+                  return (
+                    <div
+                      key={rw.id}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-[#0F172A]"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-md bg-[#F57C00]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#F57C00]">
+                            -{rw.stampCost} selos
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            Estoque: {rw.stockQuantity}
+                          </span>
+                        </div>
+                        <h4 className="mt-1 font-display text-xs font-bold text-slate-900 dark:text-white">
+                          {rw.name}
+                        </h4>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant={canRedeem ? "orange" : "outline"}
+                        size="sm"
+                        disabled={!canRedeem || isPending}
+                        onClick={() => handleRedeemReward(rw.id)}
+                        className="shrink-0 rounded-xl text-xs"
+                      >
+                        {canRedeem ? "Entregar Brinde" : "Saldo Insuf."}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =========================================================
+            ABA 4: RESUMO OPERACIONAL DA RECEPÇÃO
+           ========================================================= */}
+        {tab === "resumo" && (
+          <div className="space-y-2.5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#0F172A]">
+              <h3 className="font-display text-sm font-bold">
+                Metas de Check-in da 35ª META
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Apenas projetos e avaliadores com check-in concluído podem emitir
+                e assinar fichas de avaliação.
+              </p>
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="flex justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-slate-900">
+                  <span>Estandes Credenciados</span>
+                  <strong className="font-mono">
+                    {projects.filter((p) => p.isAccredited).length} de{" "}
+                    {projects.length}
+                  </strong>
+                </div>
+                <div className="flex justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-slate-900">
+                  <span>Avaliadores Credenciados</span>
+                  <strong className="font-mono">
+                    {evaluators.filter((e) => e.isAccredited).length} de{" "}
+                    {evaluators.length}
+                  </strong>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Bottom Sheet de Assinatura de Projeto no Aparelho do Colaborador */}
       <Dialog

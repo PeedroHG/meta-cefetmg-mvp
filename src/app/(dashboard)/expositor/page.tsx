@@ -50,6 +50,7 @@ export default async function ExpositorPage() {
 
   return (
     <AppShell
+      hideHeader
       user={{
         id: user.id,
         name: user.name,

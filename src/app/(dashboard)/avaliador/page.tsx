@@ -44,6 +44,7 @@ export default async function AvaliadorPage() {
 
   return (
     <AppShell
+      hideHeader
       user={{
         id: evaluatorUser.id,
         name: evaluatorUser.name,
