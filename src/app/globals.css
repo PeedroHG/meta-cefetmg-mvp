@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Slate / Navy Escuro — Zero Marrom */
+    --background: 210 40% 98%; /* #F8FAFC - Slate 50 */
+    --foreground: 222 47% 11%; /* #0F172A - Slate 900 */
+
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 222 47% 11%; /* #0F172A */
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Azul Royal 35ª META (#1565C0) */
+    --primary: 212 80% 42%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%; /* #F1F5F9 - Slate 100 */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%; /* #475569 - Slate 600 */
+
+    /* Magenta 35ª META (#D81B60) */
+    --accent: 338 78% 48%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 347 77% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%; /* #E2E8F0 - Slate 200 */
+    --input: 214 32% 91%;
+    --ring: 212 80% 42%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Deep Navy / Slate Escuro (#090D16 / #0F172A) */
+    --background: 222 42% 6%; /* #090D16 */
+    --foreground: 210 40% 98%; /* #F8FAFC */
+
+    --card: 222 47% 11%; /* #0F172A */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%; /* #3B82F6 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 33% 17%; /* #1E293B - Slate 800 */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%; /* #94A3B8 - Slate 400 */
+
+    --accent: 330 81% 60%; /* #EC4899 */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 347 77% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%; /* #1E293B */
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-[#1565C0]/20 selection:text-[#1565C0] dark:selection:bg-[#3B82F6]/30 dark:selection:text-white;
+  }
+  h1, h2, h3, h4, .font-heading {
+    @apply font-display tracking-tight;
+  }
+}
+
+/* Textura sutil Halftone inspirada nos pontos da fita da 35ª META (apenas para banners/passaporte) */
+.bg-meta-halftone {
+  background-image: radial-gradient(rgba(21, 101, 192, 0.14) 1.25px, transparent 1.25px);
+  background-size: 12px 12px;
+}
+
+.dark .bg-meta-halftone {
+  background-image: radial-gradient(rgba(96, 165, 250, 0.14) 1.25px, transparent 1.25px);
+  background-size: 12px 12px;
+}
+
+/* Estilo de Borda Serrilhada de Selo Postal no Passaporte META */
+.stamp-card-perforated {
+  position: relative;
+  border: 2px dashed rgba(148, 163, 184, 0.45);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
