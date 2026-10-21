@@ -129,11 +129,6 @@ export function VisitanteDashboardView({
     (p) => !p.alreadyCollected
   );
 
-  // Próxima meta de brinde
-  const nextReward =
-    rewards.find((r) => r.stampCost > activeColoredStamps.length) ||
-    rewards[rewards.length - 1];
-
   return (
     <div>
       {/* Header Principal Nativo Unificado com Curva Inferior na Cor do Visitante (#D81B60) */}
@@ -147,35 +142,14 @@ export function VisitanteDashboardView({
       >
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs">
-                <Stamp className="h-3 w-3" />
-                Passaporte 35ª META
-              </span>
-              <span className="font-mono text-[11px] font-bold text-pink-100">
-                #{visitor.visitorShortCode}
-              </span>
-            </div>
-            <h1 className="mt-1 truncate font-display text-lg font-bold text-white">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs">
+              <Stamp className="h-3 w-3" />
+              Passaporte 35ª META
+            </span>
+            <h1 className="mt-1 truncate font-display text-xl font-bold text-white">
               Olá, {visitor.name.split(" ")[0]}!
             </h1>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("carteira")}
-            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/25 bg-white/15 px-2.5 py-1.5 text-left text-white backdrop-blur-xs transition active:scale-95 hover:bg-white/20"
-          >
-            <QrCode className="h-4 w-4 text-white" />
-            <div>
-              <div className="text-[9px] font-bold uppercase text-pink-100">
-                Passe QR
-              </div>
-              <div className="font-mono text-[11px] font-bold text-white">
-                {visitor.visitorShortCode}
-              </div>
-            </div>
-          </button>
         </div>
 
         {/* 3 Pílulas de Saldo Compactas */}
