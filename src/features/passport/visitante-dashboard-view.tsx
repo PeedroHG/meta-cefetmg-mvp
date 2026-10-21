@@ -135,20 +135,20 @@ export function VisitanteDashboardView({
 
   return (
     <div className="space-y-3.5">
-      {/* Header Compacto Mobile: Saldo da Carteira em 1 Linha */}
-      <div className="rounded-2xl border border-[#D81B60]/25 bg-white p-3.5 shadow-xs dark:border-[#F472B6]/25 dark:bg-[#0F172A] bg-meta-halftone">
+      {/* Header Principal Nativo com Curva Inferior e Cor do Visitante (#D81B60) */}
+      <div className="-mx-3.5 -mt-3 rounded-b-[28px] bg-gradient-to-br from-[#D81B60] via-[#C2185B] to-[#9C1449] px-4 pt-3.5 pb-4 text-white shadow-md">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#D81B60]/10 px-2 py-0.5 text-[10px] font-bold text-[#D81B60] dark:bg-[#F472B6]/20 dark:text-[#F472B6]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs">
                 <Stamp className="h-3 w-3" />
                 Passaporte 35ª META
               </span>
-              <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              <span className="font-mono text-[11px] font-bold text-pink-100">
                 #{visitor.visitorShortCode}
               </span>
             </div>
-            <h1 className="mt-1 truncate font-display text-base font-bold text-slate-900 dark:text-white">
+            <h1 className="mt-1 truncate font-display text-lg font-bold text-white">
               Olá, {visitor.name.split(" ")[0]}!
             </h1>
           </div>
@@ -156,14 +156,14 @@ export function VisitanteDashboardView({
           <button
             type="button"
             onClick={() => setActiveTab("carteira")}
-            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left transition active:scale-95 dark:border-slate-800 dark:bg-slate-900"
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/25 bg-white/15 px-2.5 py-1.5 text-left text-white backdrop-blur-xs transition active:scale-95 hover:bg-white/20"
           >
-            <QrCode className="h-4 w-4 text-[#D81B60]" />
+            <QrCode className="h-4 w-4 text-white" />
             <div>
-              <div className="text-[9px] font-bold uppercase text-slate-400">
+              <div className="text-[9px] font-bold uppercase text-pink-100">
                 Passe QR
               </div>
-              <div className="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-100">
+              <div className="font-mono text-[11px] font-bold text-white">
                 {visitor.visitorShortCode}
               </div>
             </div>
@@ -172,29 +172,29 @@ export function VisitanteDashboardView({
 
         {/* 3 Pílulas de Saldo Compactas */}
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <div className="rounded-xl border border-[#D81B60]/20 bg-[#D81B60]/5 px-2.5 py-1.5 text-center dark:bg-[#D81B60]/10">
-            <div className="font-mono text-lg font-extrabold leading-tight text-[#D81B60] dark:text-[#F472B6]">
+          <div className="rounded-xl border border-white/20 bg-white/15 px-2.5 py-1.5 text-center backdrop-blur-xs">
+            <div className="font-mono text-lg font-extrabold leading-tight text-white">
               {activeColoredStamps.length}
             </div>
-            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+            <div className="text-[10px] font-semibold text-pink-100">
               Coloridos
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-100/70 px-2.5 py-1.5 text-center dark:border-slate-800 dark:bg-slate-900">
-            <div className="font-mono text-lg font-extrabold leading-tight text-slate-700 dark:text-slate-300">
+          <div className="rounded-xl border border-white/15 bg-black/15 px-2.5 py-1.5 text-center backdrop-blur-xs">
+            <div className="font-mono text-lg font-extrabold leading-tight text-white">
               {spentBwStamps.length}
             </div>
-            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+            <div className="text-[10px] font-semibold text-pink-100/90">
               Trocados P&B
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#1565C0]/20 bg-[#1565C0]/5 px-2.5 py-1.5 text-center dark:bg-[#1565C0]/10">
-            <div className="font-mono text-lg font-extrabold leading-tight text-[#1565C0] dark:text-[#60A5FA]">
+          <div className="rounded-xl border border-white/20 bg-white/15 px-2.5 py-1.5 text-center backdrop-blur-xs">
+            <div className="font-mono text-lg font-extrabold leading-tight text-white">
               {stamps.length}
             </div>
-            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+            <div className="text-[10px] font-semibold text-pink-100">
               Coleção Total
             </div>
           </div>

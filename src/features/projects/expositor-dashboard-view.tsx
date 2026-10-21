@@ -123,18 +123,22 @@ export function ExpositorDashboardView({
 
   return (
     <div className="space-y-3.5">
-      {/* Header Compacto Mobile do Estande Expositor */}
-      <div className="rounded-2xl border border-[#1565C0]/25 bg-white p-3.5 shadow-xs dark:border-[#3B82F6]/25 dark:bg-[#0F172A]">
+      {/* Header Principal Nativo com Curva Inferior e Cor do Expositor (#1565C0) */}
+      <div className="-mx-3.5 -mt-3 rounded-b-[28px] bg-gradient-to-br from-[#1565C0] via-[#1D4ED8] to-[#0F3E8A] px-4 pt-3.5 pb-4 text-white shadow-md">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#1565C0]/10 px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#1565C0] dark:bg-[#3B82F6]/20 dark:text-[#60A5FA]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 font-mono text-[11px] font-bold text-white backdrop-blur-xs">
               <Presentation className="h-3 w-3" />
               Estande #{project.shortCode}
             </span>
             {project.isAccredited ? (
-              <Badge variant="success">Credenciado</Badge>
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/40 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-100">
+                Credenciado
+              </span>
             ) : (
-              <Badge variant="warning">Check-in Pendente</Badge>
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/50 bg-amber-500/25 px-2 py-0.5 text-[10px] font-bold text-amber-100">
+                Check-in Pendente
+              </span>
             )}
           </div>
           {project.stampImageUrl && (
@@ -142,17 +146,17 @@ export function ExpositorDashboardView({
             <img
               src={project.stampImageUrl}
               alt="Selo"
-              className="h-9 w-9 shrink-0 rounded-full border border-slate-200 shadow-2xs"
+              className="h-9 w-9 shrink-0 rounded-full border-2 border-white/40 shadow-xs"
             />
           )}
         </div>
 
-        <h1 className="mt-1.5 line-clamp-1 font-display text-sm font-bold text-slate-900 dark:text-white">
+        <h1 className="mt-1.5 line-clamp-1 font-display text-sm font-bold text-white">
           {project.title}
         </h1>
 
-        <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
-          <MapPin className="h-3 w-3 shrink-0 text-[#D81B60]" />
+        <div className="mt-1 flex items-center gap-1 text-[11px] text-sky-100">
+          <MapPin className="h-3 w-3 shrink-0 text-sky-200" />
           <span className="truncate">
             {project.standLocation} ({project.shift})
           </span>
@@ -163,12 +167,12 @@ export function ExpositorDashboardView({
           <button
             type="button"
             onClick={() => setActiveTab("selo")}
-            className="flex items-center justify-between rounded-xl border border-[#1565C0]/20 bg-[#1565C0]/5 px-3 py-1.5 text-left"
+            className="flex items-center justify-between rounded-xl border border-white/20 bg-white/15 px-3 py-1.5 text-left backdrop-blur-xs transition active:scale-95"
           >
-            <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+            <span className="text-[10px] font-semibold text-sky-100">
               Selos Emitidos
             </span>
-            <span className="font-mono text-sm font-extrabold text-[#1565C0] dark:text-[#60A5FA]">
+            <span className="font-mono text-sm font-extrabold text-white">
               {project.stampsCollectedCount}
             </span>
           </button>
@@ -176,12 +180,12 @@ export function ExpositorDashboardView({
           <button
             type="button"
             onClick={() => setActiveTab("banca")}
-            className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-left dark:border-slate-800 dark:bg-slate-900"
+            className="flex items-center justify-between rounded-xl border border-white/15 bg-black/15 px-3 py-1.5 text-left backdrop-blur-xs transition active:scale-95"
           >
-            <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+            <span className="text-[10px] font-semibold text-sky-100">
               Avaliações
             </span>
-            <span className="font-mono text-sm font-extrabold text-slate-900 dark:text-white">
+            <span className="font-mono text-sm font-extrabold text-white">
               {evalDoneCount}/{project.assignedEvaluators.length}
             </span>
           </button>
@@ -316,11 +320,13 @@ export function ExpositorDashboardView({
          ========================================================= */}
       {activeTab === "personalizar" && (
         <div className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-[#0F172A]">
-          <div className="flex items-center gap-2">
-            <Palette className="h-4 w-4 text-[#D81B60]" />
-            <h2 className="font-display text-sm font-bold">
-              Customizar Estande & Carimbo
-            </h2>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-[#D81B60]" />
+              <h2 className="font-display text-sm font-bold">
+                Customizar Estande & Carimbo
+              </h2>
+            </div>
           </div>
 
           <form

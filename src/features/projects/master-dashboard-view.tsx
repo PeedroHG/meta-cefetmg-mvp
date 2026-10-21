@@ -242,73 +242,73 @@ export function MasterDashboardView({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho Organizador Master (Vinho/Plum #6A1B4D) */}
-      <div className="rounded-2xl border border-[#6A1B4D]/25 bg-white p-6 shadow-xs dark:border-[#9D2B73]/30 dark:bg-[#0F172A]">
+      {/* Cabeçalho Organizador Master com Curva Inferior e Cor do Perfil (#6A1B4D) */}
+      <div className="rounded-t-2xl rounded-b-[28px] bg-gradient-to-br from-[#6A1B4D] via-[#581640] to-[#3B0D2A] p-6 text-white shadow-md">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#6A1B4D]/10 px-3 py-1 text-xs font-bold text-[#6A1B4D] dark:bg-[#9D2B73]/20 dark:text-[#E879F9]">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white backdrop-blur-xs">
               <ShieldCheck className="h-3.5 w-3.5" />
               Governança Global • Organizador Master
             </div>
-            <h1 className="mt-2 font-display text-2xl font-bold sm:text-3xl">
+            <h1 className="mt-2 font-display text-2xl font-bold text-white sm:text-3xl">
               Painel da Comissão Organizadora — 35ª META
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-1 text-sm text-fuchsia-100/90">
               Gerencie projetos, vínculos exclusivos de Expositores e Avaliadores, importe planilhas SIGAA e apure notas oficiais.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2.5">
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={() => setActiveTab("import")}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/25 bg-white/15 px-4 text-xs font-bold text-white backdrop-blur-xs transition hover:bg-white/25"
             >
-              <FileSpreadsheet className="h-4 w-4 text-[#6A1B4D] dark:text-[#E879F9]" />
+              <FileSpreadsheet className="h-4 w-4 text-fuchsia-200" />
               Importar Planilha SIGAA
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="plum"
               onClick={() => setCreateOpen(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-xs font-bold text-[#6A1B4D] shadow-xs transition hover:bg-fuchsia-50"
             >
               <Plus className="h-4 w-4" />
               Novo Projeto (+ Auto-Criar Contas)
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* KPIs em Tempo Real */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="rounded-xl border border-white/20 bg-white/15 p-3.5 backdrop-blur-xs">
+            <span className="text-xs font-medium text-fuchsia-100">
               Total de Projetos
             </span>
-            <div className="mt-1 font-display text-2xl font-bold">
+            <div className="mt-1 font-display text-2xl font-bold text-white">
               {projects.length}
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="rounded-xl border border-white/20 bg-white/15 p-3.5 backdrop-blur-xs">
+            <span className="text-xs font-medium text-fuchsia-100">
               Projetos Credenciados
             </span>
-            <div className="mt-1 font-display text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <div className="mt-1 font-display text-2xl font-bold text-emerald-300">
               {accreditedCount} / {projects.length}
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="rounded-xl border border-white/20 bg-white/15 p-3.5 backdrop-blur-xs">
+            <span className="text-xs font-medium text-fuchsia-100">
               Avaliações Concluídas
             </span>
-            <div className="mt-1 font-display text-2xl font-bold text-[#1565C0] dark:text-[#60A5FA]">
+            <div className="mt-1 font-display text-2xl font-bold text-sky-300">
               {totalEvalCount}
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="rounded-xl border border-white/20 bg-white/15 p-3.5 backdrop-blur-xs">
+            <span className="text-xs font-medium text-fuchsia-100">
               Contas Cadastradas
             </span>
-            <div className="mt-1 font-display text-2xl font-bold text-[#D81B60] dark:text-[#F472B6]">
+            <div className="mt-1 font-display text-2xl font-bold text-pink-200">
               {users.length}
             </div>
           </div>

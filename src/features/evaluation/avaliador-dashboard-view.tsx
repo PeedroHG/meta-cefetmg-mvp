@@ -196,15 +196,15 @@ export function AvaliadorDashboardView({
 
   return (
     <div className="space-y-3.5">
-      {/* Header Compacto Mobile da Banca Avaliadora */}
-      <div className="rounded-2xl border border-[#1E3A8A]/25 bg-white p-3.5 shadow-xs dark:border-[#818CF8]/25 dark:bg-[#0F172A]">
+      {/* Header Principal Nativo com Curva Inferior e Cor do Avaliador (#1E3A8A) */}
+      <div className="-mx-3.5 -mt-3 rounded-b-[28px] bg-gradient-to-br from-[#1E3A8A] via-[#1D4ED8] to-[#172554] px-4 pt-3.5 pb-4 text-white shadow-md">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#1E3A8A]/10 px-2 py-0.5 text-[10px] font-bold text-[#1E3A8A] dark:bg-[#818CF8]/20 dark:text-[#818CF8]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs">
               <ClipboardCheck className="h-3 w-3" />
               Banca Oficial • 35ª META
             </span>
-            <h1 className="mt-1 truncate font-display text-sm font-bold text-slate-900 dark:text-white">
+            <h1 className="mt-1 truncate font-display text-sm font-bold text-white">
               {evaluator.name}
             </h1>
           </div>
@@ -212,23 +212,23 @@ export function AvaliadorDashboardView({
           <button
             type="button"
             onClick={() => setActiveTab("credencial")}
-            className={`shrink-0 rounded-xl border px-2.5 py-1.5 text-right transition ${
+            className={`shrink-0 rounded-xl border px-2.5 py-1.5 text-right backdrop-blur-xs transition active:scale-95 ${
               evaluator.isAccredited
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                ? "border-emerald-300/40 bg-emerald-500/20 text-emerald-100"
+                : "border-amber-300/50 bg-amber-500/25 text-amber-100"
             }`}
           >
-            <div className="text-[9px] font-bold uppercase opacity-80">
+            <div className="text-[9px] font-bold uppercase opacity-85">
               Status
             </div>
             <div className="flex items-center gap-1 text-[11px] font-bold">
               {evaluator.isAccredited ? (
                 <>
-                  <CheckCircle2 className="h-3 w-3" /> Credenciado
+                  <CheckCircle2 className="h-3 w-3 text-emerald-300" /> Credenciado
                 </>
               ) : (
                 <>
-                  <AlertTriangle className="h-3 w-3" /> Check-in
+                  <AlertTriangle className="h-3 w-3 text-amber-300" /> Check-in
                 </>
               )}
             </div>
@@ -237,16 +237,16 @@ export function AvaliadorDashboardView({
 
         {/* Barra de Progresso Compacta da Banca */}
         <div className="mt-3 flex items-center justify-between text-[11px]">
-          <span className="font-semibold text-slate-600 dark:text-slate-300">
+          <span className="font-semibold text-indigo-100">
             Progresso de avaliações:
           </span>
-          <span className="font-mono font-bold text-[#1E3A8A] dark:text-[#818CF8]">
+          <span className="font-mono font-bold text-white">
             {completedProjects.length} de {projects.length} concluídas
           </span>
         </div>
-        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-black/25">
           <div
-            className="h-full rounded-full bg-[#1E3A8A] transition-all dark:bg-[#6366F1]"
+            className="h-full rounded-full bg-emerald-400 transition-all"
             style={{
               width: `${
                 projects.length > 0

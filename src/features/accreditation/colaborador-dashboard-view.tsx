@@ -220,15 +220,15 @@ export function ColaboradorDashboardView({
 
   return (
     <div className="space-y-3.5">
-      {/* Header Compacto Mobile da Recepção & Brindes (#F57C00) */}
-      <div className="rounded-2xl border border-[#F57C00]/30 bg-white p-3.5 shadow-xs dark:border-[#F57C00]/30 dark:bg-[#0F172A]">
+      {/* Header Principal Nativo com Curva Inferior e Cor do Colaborador (#F57C00) */}
+      <div className="-mx-3.5 -mt-3 rounded-b-[28px] bg-gradient-to-br from-[#F57C00] via-[#EA580C] to-[#C2410C] px-4 pt-3.5 pb-4 text-white shadow-md">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#F57C00]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#F57C00]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs">
               <ScanLine className="h-3 w-3" />
               Operação de Campo • 35ª META
             </span>
-            <h1 className="mt-1 font-display text-base font-bold text-slate-900 dark:text-white">
+            <h1 className="mt-1 font-display text-base font-bold text-white">
               Recepção & Balcão de Brindes
             </h1>
           </div>
@@ -236,7 +236,7 @@ export function ColaboradorDashboardView({
           <button
             type="button"
             onClick={() => setScannerOpen(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#F57C00] px-3 py-2 text-xs font-bold text-white shadow-xs active:scale-95"
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/25 bg-white/20 px-3 py-2 text-xs font-bold text-white shadow-2xs backdrop-blur-xs transition active:scale-95 hover:bg-white/25"
           >
             <QrCode className="h-4 w-4" />
             Scanner
@@ -248,12 +248,12 @@ export function ColaboradorDashboardView({
           <button
             type="button"
             onClick={() => setTab("projects")}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900"
+            className="rounded-xl border border-white/20 bg-white/15 px-2 py-1.5 backdrop-blur-xs transition active:scale-95"
           >
-            <div className="font-mono text-base font-extrabold text-slate-900 dark:text-white">
+            <div className="font-mono text-base font-extrabold text-white">
               {projects.filter((p) => p.isAccredited).length}/{projects.length}
             </div>
-            <div className="text-[10px] font-semibold text-slate-500">
+            <div className="text-[10px] font-semibold text-amber-100">
               Estandes
             </div>
           </button>
@@ -261,13 +261,13 @@ export function ColaboradorDashboardView({
           <button
             type="button"
             onClick={() => setTab("evaluators")}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900"
+            className="rounded-xl border border-white/20 bg-white/15 px-2 py-1.5 backdrop-blur-xs transition active:scale-95"
           >
-            <div className="font-mono text-base font-extrabold text-slate-900 dark:text-white">
+            <div className="font-mono text-base font-extrabold text-white">
               {evaluators.filter((e) => e.isAccredited).length}/
               {evaluators.length}
             </div>
-            <div className="text-[10px] font-semibold text-slate-500">
+            <div className="text-[10px] font-semibold text-amber-100">
               Avaliadores
             </div>
           </button>
@@ -275,12 +275,12 @@ export function ColaboradorDashboardView({
           <button
             type="button"
             onClick={() => setTab("rewards")}
-            className="rounded-xl border border-[#F57C00]/25 bg-[#F57C00]/5 px-2 py-1.5"
+            className="rounded-xl border border-white/20 bg-black/15 px-2 py-1.5 backdrop-blur-xs transition active:scale-95"
           >
-            <div className="font-mono text-base font-extrabold text-[#F57C00]">
+            <div className="font-mono text-base font-extrabold text-white">
               {selectedVisitor ? selectedVisitor.activeStamps : 0}
             </div>
-            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+            <div className="text-[10px] font-semibold text-amber-100">
               Selos Visitante
             </div>
           </button>
